@@ -1,0 +1,7 @@
+{
+  "name": "Deeniya al-Islam - AI Religious Assistant",
+  "description": "A scholarly AI assistant that provides accurate Islamic guidance with references to the Qur'an, Hadith, and reliable scholarly rulings.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
