@@ -1,7 +1,7 @@
 
 export type Sect = 'Sunni' | 'Shia';
-// We use Madhab as a generic term for School of Thought/Methodology across both sects
 export type Madhab = 'General' | 'Hanafi' | 'Maliki' | 'Shafi\'i' | 'Hanbali' | 'Usuli' | 'Akhbari';
+export type TafsirType = 'Ibn Kathir' | 'Al-Jalalayn' | 'General Scholarly';
 
 export interface User {
   id: string;
@@ -17,6 +17,11 @@ export interface Message {
   timestamp: number;
   sources?: { uri: string; title: string }[];
   isBookmarked?: boolean;
+  isNews?: boolean; 
+  image?: {
+    mimeType: string;
+    data: string; 
+  };
 }
 
 export interface ChatSession {
@@ -27,4 +32,16 @@ export interface ChatSession {
   createdAt: number;
   sect: Sect;
   madhab: Madhab;
+}
+
+export interface QuranVerse {
+  surahNumber: number;
+  ayahNumber: number;
+  surahName: string;
+  arabicText: string;
+  transliteration: string;
+  translation: string;
+  tafsirSummary: string;
+  tafsirType?: TafsirType;
+  audioUri?: string; // Authentic recitation URI
 }

@@ -6,16 +6,19 @@ interface SidebarProps {
   user: User | null;
   onLogout: () => void;
   onOpenAuth: () => void;
+  onOpenDiscovery: () => void;
   sessions: ChatSession[];
   activeSessionId: string | null;
   onSelectSession: (id: string) => void;
   onNewSession: () => void;
   onDeleteSession: (id: string) => void;
   onShowBookmarks: () => void;
-  activeView: 'chat' | 'bookmarks';
+  onShowQuran: () => void;
+  onShowArts: () => void;
+  activeView: 'chat' | 'bookmarks' | 'quran' | 'arts';
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, onOpenAuth, sessions, activeSessionId, onSelectSession, onNewSession, onDeleteSession, onShowBookmarks, activeView }) => {
+const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, onOpenAuth, onOpenDiscovery, sessions, activeSessionId, onSelectSession, onNewSession, onDeleteSession, onShowBookmarks, onShowQuran, onShowArts, activeView }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredSessions = sessions.filter(s => 
@@ -37,9 +40,8 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, onOpenAuth, sessions,
 
   const groups = getGroupedSessions();
 
-  const SessionItem = ({ session }: { session: ChatSession }) => (
+  const SessionItem = ({ session }: { session: ChatSession; key?: string }) => (
     <div 
-      key={session.id}
       className={`group flex items-center justify-between rounded-xl px-3 py-2.5 cursor-pointer transition-all duration-200 mb-1 ${
         activeSessionId === session.id && activeView === 'chat'
           ? 'bg-emerald-800/20 text-emerald-100 border-l-4 border-emerald-500 ring-1 ring-white/5' 
@@ -76,38 +78,68 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, onOpenAuth, sessions,
 
   return (
     <aside className="w-72 bg-stone-950 text-stone-300 flex flex-col h-full border-r border-stone-800 hidden md:flex">
+      {/* Top Header Section */}
       <div className="p-4 space-y-3">
-        <button 
-          onClick={onNewSession}
-          className="w-full bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl py-3.5 px-4 flex items-center justify-center space-x-2 transition-all duration-200 shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
-        >
-          <i className="fas fa-feather-pointed text-sm"></i>
-          <span className="font-bold text-sm tracking-tight">New Inquiry</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={onNewSession}
+            className="flex-shrink-0 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl h-11 px-4 flex items-center justify-center transition-all duration-200 shadow-lg shadow-emerald-900/20 active:scale-[0.95]"
+            title="New Inquiry"
+          >
+            <i className="fas fa-plus text-sm"></i>
+          </button>
+          <div className="flex-1 relative group">
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-stone-600 group-focus-within:text-emerald-500 transition-colors text-xs"></i>
+            <input 
+              type="text"
+              placeholder="Search history..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-stone-900 border border-stone-800 rounded-xl pl-9 h-11 text-xs text-stone-300 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all"
+            />
+          </div>
+        </div>
 
-        <button 
-          onClick={onShowBookmarks}
-          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 border ${
-            activeView === 'bookmarks' 
-              ? 'bg-amber-900/30 border-amber-800/50 text-amber-400 shadow-inner shadow-amber-900/40' 
-              : 'bg-stone-900 border-stone-800 text-stone-500 hover:text-stone-200 hover:border-stone-700'
-          }`}
-        >
-          <i className="fas fa-scroll text-sm"></i>
-          <span className="font-bold text-sm">Wisdom Library</span>
-        </button>
-      </div>
+        <div className="grid grid-cols-1 gap-2">
+          <button 
+            onClick={onShowQuran}
+            className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 border ${
+              activeView === 'quran' 
+                ? 'bg-teal-900/30 border-teal-800/50 text-teal-400 shadow-inner shadow-teal-900/40' 
+                : 'bg-stone-900 border-stone-800 text-stone-500 hover:text-stone-200 hover:border-stone-700'
+            }`}
+          >
+            <i className="fas fa-book-open text-sm"></i>
+            <span className="font-bold text-sm">Quran Explorer</span>
+          </button>
 
-      <div className="px-4 pb-4">
-        <div className="relative group">
-          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-stone-600 group-focus-within:text-emerald-500 transition-colors text-xs"></i>
-          <input 
-            type="text"
-            placeholder="Search history..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-stone-900 border border-stone-800 rounded-xl pl-9 py-2.5 text-xs text-stone-300 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all"
-          />
+          <button 
+            onClick={onShowBookmarks}
+            className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 border ${
+              activeView === 'bookmarks' 
+                ? 'bg-emerald-900/30 border-emerald-800/50 text-emerald-400 shadow-inner shadow-emerald-900/40' 
+                : 'bg-stone-900 border-stone-800 text-stone-500 hover:text-stone-200 hover:border-stone-700'
+            }`}
+          >
+            <i className="fas fa-scroll text-sm"></i>
+            <span className="font-bold text-sm">Wisdom Library</span>
+          </button>
+
+          {/* Consolidated What's New Hub with both Icons */}
+          <button 
+            onClick={onOpenDiscovery}
+            className="flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 border bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 group"
+          >
+            <div className="flex items-center space-x-3">
+              <i className="fas fa-sparkles animate-pulse text-sm"></i>
+              <span className="font-bold text-sm">What's New?</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <i className="fas fa-palette text-[10px] opacity-60 group-hover:opacity-100 transition-opacity"></i>
+              <i className="fab fa-x-twitter text-[10px] opacity-60 group-hover:opacity-100 transition-opacity"></i>
+              <span className="bg-amber-500 text-stone-950 text-[7px] px-1 rounded font-black shadow-sm">PRO</span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -141,8 +173,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, onOpenAuth, sessions,
         )}
       </div>
 
-      {/* User Profile Section */}
-      <div className="p-4 border-t border-stone-900 mt-auto bg-stone-950/80 backdrop-blur-sm">
+      <div className="p-4 border-t border-stone-900 mt-auto bg-stone-950/80 backdrop-blur-sm space-y-3">
         {user ? (
           <div className="group relative bg-stone-900/60 p-3 rounded-xl border border-stone-800 flex items-center space-x-3 transition-all">
             <div className="w-9 h-9 rounded-full bg-emerald-950 flex items-center justify-center text-emerald-400 border border-emerald-900/50 shadow-inner">
@@ -150,7 +181,10 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, onOpenAuth, sessions,
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-stone-200 truncate">{user.name}</p>
-              <p className="text-[9px] text-stone-500 truncate">{user.email}</p>
+              <div className="flex items-center space-x-2">
+                 <span className="text-[9px] text-stone-500 truncate">{user.email}</span>
+                 <span className="text-[7px] text-amber-500 font-black border border-amber-900/50 px-1 rounded">PRO</span>
+              </div>
             </div>
             <button 
              onClick={onLogout}
@@ -167,7 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, onOpenAuth, sessions,
                 <i className="fas fa-user text-xs"></i>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-stone-400 truncate">Guest Seeker</p>
+                <p className="text-xs font-bold text-stone-400 truncate">Student of Knowledge</p>
                 <p className="text-[9px] text-stone-600 truncate italic">Not synced</p>
               </div>
             </div>

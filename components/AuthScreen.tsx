@@ -16,7 +16,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate auth logic
     const newUser: User = {
       id: uuidv4(),
       name: isLogin ? (email.split('@')[0] || 'Seeker') : name,
@@ -37,7 +36,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
         </button>
 
         <div className="bg-emerald-900 p-10 text-center relative overflow-hidden">
-          {/* Decorative Background Pattern */}
           <div className="absolute inset-0 opacity-10 pointer-events-none flex items-center justify-center">
              <i className="fas fa-mosque text-[15rem] rotate-12"></i>
           </div>
@@ -46,9 +44,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
             <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center mx-auto mb-6 border border-white/20 shadow-xl transform hover:rotate-6 transition-transform">
               <i className="fas fa-kaaba text-3xl text-emerald-100"></i>
             </div>
-            <h1 className="text-3xl font-arabic font-bold text-white mb-2">Deeniya al-Islam</h1>
+            <h1 className="text-3xl font-arabic font-bold text-white mb-2">Muslimah AI</h1>
             <p className="text-emerald-200 text-xs font-bold uppercase tracking-[0.3em] opacity-80">
-              {isLogin ? 'Welcome back, Seeker' : 'Begin Your Journey'}
+              {isLogin ? 'Scholarly Entry' : 'Join the Ummah'}
             </p>
           </div>
         </div>
@@ -62,7 +60,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
                   <i className="far fa-user absolute left-4 top-1/2 -translate-y-1/2 text-stone-300"></i>
                   <input 
                     type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                    placeholder="E.g. Abdullah Ahmed"
+                    placeholder="E.g. Amina Mansour"
                     className="w-full bg-stone-50 border border-stone-200 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
                   />
                 </div>

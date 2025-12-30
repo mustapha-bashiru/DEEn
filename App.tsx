@@ -6,28 +6,47 @@ import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
 import BookmarksLibrary from './components/BookmarksLibrary';
 import AuthScreen from './components/AuthScreen';
+import QuranExplorer from './components/QuranExplorer';
+import SacredArts from './components/SacredArts';
+import DiscoveryOverlay from './components/DiscoveryOverlay';
 import { v4 as uuidv4 } from 'uuid';
+
+const CURRENT_VERSION = "2.3"; 
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [currentSect, setCurrentSect] = useState<Sect>('Sunni');
   const [currentMadhab, setCurrentMadhab] = useState<Madhab>('General');
   const [isTyping, setIsTyping] = useState(false);
+  const [typingText, setTypingText] = useState("Consulting scholarly records...");
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<'chat' | 'bookmarks'>('chat');
+  const [view, setView] = useState<'chat' | 'bookmarks' | 'quran' | 'arts'>('chat');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showDiscovery, setShowDiscovery] = useState(false);
 
-  // Load User from storage
   useEffect(() => {
     const savedUser = localStorage.getItem('deeniya_user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
+      setIsPremium(true);
     }
+    setShowDiscovery(true);
   }, []);
 
-  // Load Sessions when user changes (Guest or Authenticated)
+  const dismissDiscovery = () => {
+    setShowDiscovery(false);
+  };
+
+  const handleDiscoveryNavigation = (newView: 'chat' | 'bookmarks' | 'quran' | 'arts', prompt?: string) => {
+    setView(newView);
+    if (prompt) {
+      handleSendMessage(prompt);
+    }
+  };
+
   useEffect(() => {
     const storageKey = user ? `deeniya_sessions_${user.id}` : 'deeniya_sessions_guest';
     const lastActiveKey = user ? `deeniya_last_active_${user.id}` : 'deeniya_last_active_guest';
@@ -54,7 +73,6 @@ const App: React.FC = () => {
     }
   }, [user]);
 
-  // Persist sessions
   useEffect(() => {
     const storageKey = user ? `deeniya_sessions_${user.id}` : 'deeniya_sessions_guest';
     const lastActiveKey = user ? `deeniya_last_active_${user.id}` : 'deeniya_last_active_guest';
@@ -69,12 +87,14 @@ const App: React.FC = () => {
 
   const handleLogin = (newUser: User) => {
     setUser(newUser);
+    setIsPremium(true);
     localStorage.setItem('deeniya_user', JSON.stringify(newUser));
     setShowAuthModal(false);
   };
 
   const handleLogout = () => {
     setUser(null);
+    setIsPremium(false);
     localStorage.removeItem('deeniya_user');
   };
 
@@ -95,15 +115,25 @@ const App: React.FC = () => {
     setView('chat');
   };
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, image?: { mimeType: string, data: string }) => {
     const activeSession = sessions.find(s => s.id === activeSessionId);
     if (!activeSession) return;
+
+    const newsKeywords = ['news', 'latest', 'on x', 'twitter', 'recent posts', 'updates', 'happening', 'social media'];
+    const isNewsRequest = newsKeywords.some(keyword => content.toLowerCase().includes(keyword));
+    
+    if (isNewsRequest && !isPremium) {
+      setError("The 'Pulse of the Ummah' real-time scholarly news feed is exclusive to Students of Knowledge (PRO). Please sign in to summarize verified updates.");
+      setShowAuthModal(true);
+      return;
+    }
 
     const userMessage: Message = {
       id: uuidv4(),
       role: 'user',
       content,
       timestamp: Date.now(),
+      image,
     };
 
     setSessions(prev => prev.map(s => {
@@ -119,15 +149,19 @@ const App: React.FC = () => {
     }));
 
     setIsTyping(true);
+    setTypingText(isNewsRequest ? "Scanning global scholarly feeds..." : "Consulting scholarly records...");
     setError(null);
 
     try {
       const history = activeSession.messages.map(m => ({
         role: (m.role === 'user' ? 'user' : 'model') as 'user' | 'model',
-        parts: [{ text: m.content }]
+        parts: [
+          { text: m.content },
+          ...(m.image ? [{ inlineData: { mimeType: m.image.mimeType, data: m.image.data } }] : [])
+        ]
       })) || [];
 
-      const { text, sources } = await queryAdDeen(content, activeSession.sect, activeSession.madhab, history);
+      const { text, sources, isNews } = await queryAdDeen(content, activeSession.sect, activeSession.madhab, history, image);
 
       const assistantMessage: Message = {
         id: uuidv4(),
@@ -135,6 +169,7 @@ const App: React.FC = () => {
         content: text,
         timestamp: Date.now(),
         sources,
+        isNews: isNews,
       };
 
       setSessions(prev => prev.map(s => {
@@ -144,7 +179,7 @@ const App: React.FC = () => {
         return s;
       }));
     } catch (err) {
-      setError("I apologize, I encountered an error while consulting the sources.");
+      setError("I apologize, I encountered an error while consulting the sources. Please check your connection.");
     } finally {
       setIsTyping(false);
     }
@@ -207,12 +242,15 @@ const App: React.FC = () => {
         user={user}
         onLogout={handleLogout}
         onOpenAuth={() => setShowAuthModal(true)}
+        onOpenDiscovery={() => setShowDiscovery(true)}
         sessions={sessions} 
         activeSessionId={activeSessionId} 
         onSelectSession={handleSelectSession} 
         onNewSession={() => createNewSession(currentSect, currentMadhab)}
         onDeleteSession={deleteSession}
         onShowBookmarks={() => setView('bookmarks')}
+        onShowQuran={() => setView('quran')}
+        onShowArts={() => setView('arts')}
         activeView={view}
       />
       
@@ -223,8 +261,8 @@ const App: React.FC = () => {
               <i className={`fas ${currentSect === 'Sunni' ? 'fa-mosque' : 'fa-kaaba'} text-xl`}></i>
             </div>
             <button onClick={() => setView('chat')} className="text-left group focus:outline-none">
-              <h1 className="font-black text-xl text-stone-900 leading-none group-hover:text-emerald-800 transition-colors">Deeniya al-Islam</h1>
-              <p className="text-[10px] text-stone-500 font-black uppercase tracking-[0.2em] mt-1.5 opacity-70">Scholarly AI Assistant</p>
+              <h1 className="font-black text-xl text-stone-900 leading-none group-hover:text-emerald-800 transition-colors">Muslimah AI Assistant</h1>
+              <p className="text-[10px] text-stone-500 font-black uppercase tracking-[0.2em] mt-1.5 opacity-70">Expert Scholarly Correspondent</p>
             </button>
           </div>
 
@@ -265,15 +303,17 @@ const App: React.FC = () => {
           )}
         </header>
 
-        {view === 'chat' ? (
+        {view === 'chat' && (
           <ChatInterface 
             session={activeSession || null}
             isTyping={isTyping}
+            typingText={typingText}
             error={error}
             onSendMessage={handleSendMessage}
             onToggleBookmark={(mid) => activeSessionId && toggleBookmark(activeSessionId, mid)}
           />
-        ) : (
+        )}
+        {view === 'bookmarks' && (
           <BookmarksLibrary 
             sessions={sessions}
             onToggleBookmark={toggleBookmark}
@@ -281,13 +321,37 @@ const App: React.FC = () => {
             onClose={() => setView('chat')}
           />
         )}
+        {view === 'quran' && (
+          <QuranExplorer 
+            onAskAboutVerse={(verse) => {
+              setView('chat');
+              handleSendMessage(`Tell me more about the historical context and scholarly importance of the verse: Surah ${verse.surahName} (${verse.surahNumber}), Ayah ${verse.ayahNumber}.`);
+            }}
+            onClose={() => setView('chat')}
+          />
+        )}
+        {view === 'arts' && (
+          <SacredArts 
+            isPremium={isPremium}
+            onOpenAuth={() => setShowAuthModal(true)}
+            onClose={() => setView('chat')}
+          />
+        )}
       </main>
 
-      {/* Auth Modal */}
       {showAuthModal && (
         <AuthScreen 
           onLogin={handleLogin} 
           onClose={() => setShowAuthModal(false)} 
+        />
+      )}
+
+      {showDiscovery && (
+        <DiscoveryOverlay 
+          isPremium={isPremium} 
+          onOpenAuth={() => setShowAuthModal(true)}
+          onNavigate={handleDiscoveryNavigation}
+          onClose={dismissDiscovery} 
         />
       )}
     </div>
