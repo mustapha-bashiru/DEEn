@@ -1,8 +1,9 @@
 {
-  "name": "Muslimah AI Assistant",
-  "description": "A specialized AI assistant providing accurate Islamic guidance and real-time news with a focus on scholarly integrity.",
+  "name": "Ask the Shaykh – AI Religious Assistant",
+  "description": "A specialized AI assistant providing accurate Islamic guidance with real-time hardware integration for vision and voice inquiries.",
   "requestFramePermissions": [
+    "camera",
     "microphone",
-    "camera"
+    "geolocation"
   ]
 }

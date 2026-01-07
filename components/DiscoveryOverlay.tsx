@@ -1,49 +1,53 @@
 
 import React, { useState } from 'react';
+import { Language, translations } from '../translations';
 
 interface DiscoveryOverlayProps {
+  lang: Language;
   onClose: () => void;
   isPremium: boolean;
   onOpenAuth: () => void;
   onNavigate: (view: 'chat' | 'bookmarks' | 'quran' | 'arts', initialPrompt?: string) => void;
 }
 
-const features = [
-  {
-    id: 'news',
-    title: "Pulse of the Ummah",
-    description: "Real-time scholarly news. We now scan verified X (Twitter) feeds to bring you live updates from the world's leading Islamic institutions.",
-    icon: "fab fa-x-twitter",
-    color: "bg-stone-900",
-    tag: "LIVE",
-    actionLabel: "Try Pulse News",
-    view: 'chat' as const,
-    prompt: "What is the latest scholarly news on X today?"
-  },
-  {
-    id: 'arts',
-    title: "Sacred Arts AI",
-    description: "Generate stunning Islamic calligraphy and geometric patterns using our advanced image model. Exclusive for Students of Knowledge.",
-    icon: "fa-palette",
-    color: "bg-amber-600",
-    tag: "PRO",
-    actionLabel: "Open Studio",
-    view: 'arts' as const
-  },
-  {
-    id: 'voice',
-    title: "Voice of Knowledge",
-    description: "Listen to scholarly responses with our new high-fidelity text-to-speech engine. Perfect for learning on the go.",
-    icon: "fa-volume-up",
-    color: "bg-teal-600",
-    tag: "NEW",
-    actionLabel: "Try it in Chat",
-    view: 'chat' as const
-  }
-];
-
-const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, isPremium, onOpenAuth, onNavigate }) => {
+const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, isPremium, onOpenAuth, onNavigate, lang }) => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const t = translations[lang];
+
+  const features = [
+    {
+      id: 'legacy',
+      title: t.legacyOfKnowledge,
+      description: lang === 'ar' ? "منهج علمي مستمر. نستكشف كل يوم عمالقة العلم والفلسفة والفقه الإسلامي في رواية متصلة." : "A continuous scholarly curriculum. Everyday, we explore the giants of Islamic science, philosophy, and jurisprudence in a connected narrative.",
+      icon: "fa-pen-fancy",
+      color: "bg-amber-600",
+      tag: lang === 'ar' ? "متاح" : "UNLOCKED",
+      actionLabel: lang === 'ar' ? "ادخل السلسلة" : "Enter the Chain",
+      view: 'chat' as const,
+      prompt: t.legacyPrompt
+    },
+    {
+      id: 'news',
+      title: t.scholarlyNews,
+      description: lang === 'ar' ? "أخبار علمية في الوقت الفعلي. نقوم الآن بمسح الخلاصات الموثقة لنقدم لك تحديثات مباشرة من المؤسسات الإسلامية الرائدة." : "Real-time scholarly news. We now scan verified feeds to bring you live updates from leading Islamic institutions.",
+      icon: "fa-rss",
+      color: "bg-blue-600",
+      tag: "LIVE",
+      actionLabel: lang === 'ar' ? "عرض آخر الأخبار" : "View Latest News",
+      view: 'chat' as const,
+      prompt: t.newsPrompt
+    },
+    {
+      id: 'arts',
+      title: t.sacredArts,
+      description: lang === 'ar' ? "ولد جماليات إسلامية مذهلة باستخدام نماذجنا التوليدية. من خط الثلث إلى الهندسة الأندلسية." : "Generate stunning Islamic aesthetics using our generative models. From Thuluth calligraphy to Andalusian geometry.",
+      icon: "fa-palette",
+      color: "bg-emerald-600",
+      tag: "STUDIO",
+      actionLabel: lang === 'ar' ? "افتح الاستوديو" : "Open Studio",
+      view: 'arts' as const
+    }
+  ];
 
   const handleLaunch = () => {
     const feature = features[activeIndex];
@@ -61,7 +65,7 @@ const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, isPremium,
             const isTop = i === activeIndex;
             const offset = (i - activeIndex);
             
-            if (offset < 0) return null; // Simple carousel logic
+            if (offset < 0) return null;
 
             return (
               <div 
@@ -77,13 +81,12 @@ const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, isPremium,
                 }}
               >
                 <div className={`w-20 h-20 rounded-3xl ${f.color} text-white flex items-center justify-center mb-6 shadow-xl`}>
-                  <i className={`${f.icon} text-3xl`}></i>
+                  <i className={`fas ${f.icon} text-3xl`}></i>
                 </div>
                 <div className="flex items-center space-x-2 mb-3">
                   <span className={`text-[10px] font-black px-3 py-1 rounded-full tracking-widest ${isTop ? 'bg-stone-100 text-stone-900' : 'bg-white/10 text-white/50'}`}>
                     {f.tag}
                   </span>
-                  {f.tag === 'PRO' && <i className="fas fa-crown text-[10px] text-amber-500"></i>}
                 </div>
                 <h3 className={`text-xl font-bold ${isTop ? 'text-stone-900' : 'text-white'}`}>{f.title}</h3>
               </div>
@@ -94,7 +97,7 @@ const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, isPremium,
         {/* Content Section */}
         <div className="space-y-4 animate-fade-in" key={activeIndex}>
           <h2 className="text-3xl font-black text-white tracking-tight">
-            Discovery Hub
+            {t.discoveryTitle}
           </h2>
           <p className="text-stone-400 text-sm leading-relaxed max-w-sm mx-auto font-medium">
             {features[activeIndex].description}
@@ -108,7 +111,7 @@ const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, isPremium,
             className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-5 rounded-2xl font-bold shadow-xl shadow-emerald-900/40 transition-all active:scale-95 flex items-center justify-center space-x-3"
           >
             <span>{features[activeIndex].actionLabel}</span>
-            <i className="fas fa-bolt"></i>
+            <i className={`fas fa-bolt ${lang === 'ar' ? 'mr-3' : 'ml-3'}`}></i>
           </button>
 
           {activeIndex < features.length - 1 ? (
@@ -116,23 +119,14 @@ const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, isPremium,
               onClick={() => setActiveIndex(prev => prev + 1)}
               className="w-full bg-white/5 hover:bg-white/10 text-white py-5 rounded-2xl font-bold border border-white/10 transition-all active:scale-95"
             >
-              Next Update
+              {t.discoveryMoreBtn}
             </button>
           ) : (
             <button 
               onClick={onClose}
               className="w-full bg-white text-stone-900 py-5 rounded-2xl font-bold shadow-xl transition-all active:scale-95"
             >
-              Return to Inquiry
-            </button>
-          )}
-
-          {!isPremium && (
-            <button 
-              onClick={onOpenAuth}
-              className="text-stone-500 text-xs font-bold uppercase tracking-widest hover:text-amber-500 transition-colors py-2"
-            >
-              Unlock Pro Features
+              {t.discoveryLaunchBtn}
             </button>
           )}
         </div>

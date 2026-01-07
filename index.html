@@ -4,36 +4,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Muslimah AI Assistant - Scholarly Researcher</title>
+  <title>Muslimah AI – Sanctuary Edition</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --emerald-sacred: #064e3b;
+      --sand-sacred: #f7f3f0;
+      --gold-sacred: #c5a059;
+      --charcoal-sacred: #2d2d2d;
+    }
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--sand-sacred);
+      color: var(--charcoal-sacred);
+      overflow-x: hidden;
     }
     .font-arabic {
-      font-family: 'Amiri', serif;
+      font-family: 'Noto Sans Arabic', 'Amiri', serif;
     }
     .animate-fade-in {
-      animation: fadeIn 0.5s ease-out;
+      animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(15px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .custom-scrollbar::-webkit-scrollbar {
-      width: 5px;
+      width: 6px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
-      background: transparent;
+      background: rgba(0,0,0,0.02);
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #e5e7eb;
-      border-radius: 10px;
+      background: #d1d5db;
+      border-radius: 12px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #d1d5db;
+      background: var(--gold-sacred);
+    }
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    .pattern-bg {
+      background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='%23064e3b' fill-opacity='0.02'/%3E%3C/svg%3E");
     }
   </style>
 <script type="importmap">
@@ -49,7 +67,7 @@
 }
 </script>
 </head>
-<body class="bg-stone-50 text-stone-900">
+<body class="pattern-bg">
   <div id="root"></div>
 </body>
 </html>
