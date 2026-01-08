@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 import { Sect, Madhab } from '../types';
@@ -12,6 +11,7 @@ interface LiveSessionOverlayProps {
 }
 
 // Robust encoding/decoding functions as per Gemini Live API specs
+// Do not use external libraries for these as per instructions.
 function encode(bytes: Uint8Array) {
   let binary = '';
   const len = bytes.byteLength;
@@ -75,14 +75,6 @@ const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, 
           await inputAudioContext.resume();
           await outputAudioContext.resume();
 
-          // Initial Greeting to break the "stuck" silence
-          sessionPromise.then(session => {
-             // Send a greeting to trigger the first response
-             session.sendRealtimeInput([{ 
-               text: lang === 'ar' ? "السلام عليكم، كيف يمكنني مساعدتكم اليوم في طلب العلم؟" : "As-salamu alaykum. How may I assist you in your pursuit of knowledge today?" 
-             }]);
-          });
-
           // Microphone stream
           try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -96,6 +88,7 @@ const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, 
                 int16[i] = inputData[i] * 32768;
               }
               const encodedData = encode(new Uint8Array(int16.buffer));
+              // CRITICAL: Solely rely on sessionPromise resolves and then call `session.sendRealtimeInput`
               sessionPromise.then(s => s.sendRealtimeInput({ 
                 media: { data: encodedData, mimeType: 'audio/pcm;rate=16000' } 
               }));
