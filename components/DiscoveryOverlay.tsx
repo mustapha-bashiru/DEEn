@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Language, translations } from '../translations';
 
@@ -16,19 +15,8 @@ const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, isPremium,
 
   const features = [
     {
-      id: 'legacy',
-      title: t.legacyOfKnowledge,
-      description: lang === 'ar' ? "منهج علمي مستمر. نستكشف كل يوم عمالقة العلم والفلسفة والفقه الإسلامي في رواية متصلة." : "A continuous scholarly curriculum. Everyday, we explore the giants of Islamic science, philosophy, and jurisprudence in a connected narrative.",
-      icon: "fa-pen-fancy",
-      color: "bg-amber-600",
-      tag: lang === 'ar' ? "متاح" : "UNLOCKED",
-      actionLabel: lang === 'ar' ? "ادخل السلسلة" : "Enter the Chain",
-      view: 'chat' as const,
-      prompt: t.legacyPrompt
-    },
-    {
       id: 'news',
-      title: t.scholarlyNews,
+      title: "Sanctuary Briefing",
       description: lang === 'ar' ? "أخبار علمية في الوقت الفعلي. نقوم الآن بمسح الخلاصات الموثقة لنقدم لك تحديثات مباشرة من المؤسسات الإسلامية الرائدة." : "Real-time scholarly news. We now scan verified feeds to bring you live updates from leading Islamic institutions.",
       icon: "fa-rss",
       color: "bg-blue-600",
@@ -38,14 +26,15 @@ const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, isPremium,
       prompt: t.newsPrompt
     },
     {
-      id: 'arts',
-      title: t.sacredArts,
-      description: lang === 'ar' ? "ولد جماليات إسلامية مذهلة باستخدام نماذجنا التوليدية. من خط الثلث إلى الهندسة الأندلسية." : "Generate stunning Islamic aesthetics using our generative models. From Thuluth calligraphy to Andalusian geometry.",
-      icon: "fa-palette",
-      color: "bg-emerald-600",
-      tag: "STUDIO",
-      actionLabel: lang === 'ar' ? "افتح الاستوديو" : "Open Studio",
-      view: 'arts' as const
+      id: 'legacy',
+      title: "Legacy Explorer",
+      description: lang === 'ar' ? "منهج علمي مستمر. نستكشف كل يوم عمالقة العلم والفلسفة والفقه الإسلامي." : "A continuous scholarly curriculum exploring the giants of Islamic science and philosophy in a connected narrative.",
+      icon: "fa-pen-fancy",
+      color: "bg-amber-600",
+      tag: "WISDOM",
+      actionLabel: lang === 'ar' ? "ادخل السلسلة" : "Enter the Chain",
+      view: 'chat' as const,
+      prompt: t.legacyPrompt
     }
   ];
 
@@ -55,88 +44,71 @@ const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, isPremium,
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-stone-950/90 backdrop-blur-xl animate-fade-in">
-      <div className="max-w-md w-full flex flex-col items-center text-center">
-        
-        {/* Card Stack Visualization */}
-        <div className="relative w-64 h-80 mb-12">
-          {features.map((f, i) => {
-            const isTop = i === activeIndex;
-            const offset = (i - activeIndex);
-            
-            if (offset < 0) return null;
+  const handleNext = () => {
+    if (activeIndex < features.length - 1) {
+      setActiveIndex(prev => prev + 1);
+    } else {
+      // Once we've seen everything, close discovery
+      onClose();
+    }
+  };
 
-            return (
-              <div 
-                key={i}
-                className={`absolute inset-0 rounded-[2.5rem] border-2 shadow-2xl transition-all duration-500 flex flex-col items-center justify-center p-8 ${
-                  isTop 
-                    ? 'z-30 bg-white border-white scale-100 opacity-100 translate-y-0' 
-                    : `z-20 bg-stone-800 border-stone-700 scale-90 opacity-40 translate-y-8`
-                }`}
-                style={{ 
-                  transform: `translateY(${offset * 12}px) scale(${1 - (offset * 0.05)})`,
-                  zIndex: 30 - i
-                }}
-              >
-                <div className={`w-20 h-20 rounded-3xl ${f.color} text-white flex items-center justify-center mb-6 shadow-xl`}>
-                  <i className={`fas ${f.icon} text-3xl`}></i>
-                </div>
-                <div className="flex items-center space-x-2 mb-3">
-                  <span className={`text-[10px] font-black px-3 py-1 rounded-full tracking-widest ${isTop ? 'bg-stone-100 text-stone-900' : 'bg-white/10 text-white/50'}`}>
-                    {f.tag}
-                  </span>
-                </div>
-                <h3 className={`text-xl font-bold ${isTop ? 'text-stone-900' : 'text-white'}`}>{f.title}</h3>
-              </div>
-            );
-          })}
+  return (
+    <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-[#121212] animate-fade-in overflow-hidden">
+      <button 
+        onClick={onClose}
+        className="absolute top-10 right-10 w-12 h-12 bg-white/5 hover:bg-white/10 text-white rounded-full flex items-center justify-center transition-all z-50 border border-white/5"
+      >
+        <i className="fas fa-times"></i>
+      </button>
+
+      <div className="max-w-md w-full flex flex-col items-center">
+        
+        {/* Top Feature Visual Container */}
+        <div className="w-full h-80 bg-[#1F1F1F] rounded-[4rem] border border-white/5 flex flex-col items-center justify-center mb-10 relative overflow-hidden group">
+          <div className={`w-32 h-32 rounded-[2.5rem] ${features[activeIndex].color} shadow-[0_0_80px_-20px_rgba(37,99,235,0.4)] flex items-center justify-center mb-6 transition-transform group-hover:scale-105 duration-700`}>
+            <i className={`fas ${features[activeIndex].icon} text-5xl text-white`}></i>
+          </div>
+          <span className="bg-white/5 text-[10px] font-black tracking-[0.5em] uppercase px-5 py-2 rounded-full text-white/40 mb-4 border border-white/5">
+            {features[activeIndex].tag}
+          </span>
+          <h3 className="text-2xl font-black text-white uppercase tracking-tighter">{features[activeIndex].title}</h3>
         </div>
 
         {/* Content Section */}
-        <div className="space-y-4 animate-fade-in" key={activeIndex}>
-          <h2 className="text-3xl font-black text-white tracking-tight">
-            {t.discoveryTitle}
+        <div className="space-y-4 text-center animate-fade-in mb-16" key={activeIndex}>
+          <h2 className="text-3xl font-black text-white tracking-tighter uppercase">
+            {features[activeIndex].title}
           </h2>
-          <p className="text-stone-400 text-sm leading-relaxed max-w-sm mx-auto font-medium">
+          <p className="text-scholar-muted text-[15px] leading-relaxed max-w-sm mx-auto font-medium opacity-80">
             {features[activeIndex].description}
           </p>
         </div>
 
         {/* Footer Controls */}
-        <div className="mt-12 w-full flex flex-col space-y-3">
+        <div className="w-full flex flex-col space-y-4">
           <button 
             onClick={handleLaunch}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-5 rounded-2xl font-bold shadow-xl shadow-emerald-900/40 transition-all active:scale-95 flex items-center justify-center space-x-3"
+            className="w-full bg-[#10B981] hover:bg-emerald-500 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-2xl transition-all active:scale-95 flex items-center justify-center space-x-4"
           >
             <span>{features[activeIndex].actionLabel}</span>
-            <i className={`fas fa-bolt ${lang === 'ar' ? 'mr-3' : 'ml-3'}`}></i>
+            <i className="fas fa-bolt-lightning text-sm"></i>
           </button>
 
-          {activeIndex < features.length - 1 ? (
-            <button 
-              onClick={() => setActiveIndex(prev => prev + 1)}
-              className="w-full bg-white/5 hover:bg-white/10 text-white py-5 rounded-2xl font-bold border border-white/10 transition-all active:scale-95"
-            >
-              {t.discoveryMoreBtn}
-            </button>
-          ) : (
-            <button 
-              onClick={onClose}
-              className="w-full bg-white text-stone-900 py-5 rounded-2xl font-bold shadow-xl transition-all active:scale-95"
-            >
-              {t.discoveryLaunchBtn}
-            </button>
-          )}
+          <button 
+            onClick={handleNext}
+            className="w-full bg-transparent border-2 border-white/10 hover:border-white/20 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest transition-all active:scale-95"
+          >
+            {activeIndex === features.length - 1 ? "Begin Journey" : "Discover More"}
+          </button>
         </div>
 
         {/* Pagination Dots */}
-        <div className="flex space-x-2 mt-8">
+        <div className="flex space-x-3 mt-12">
           {features.map((_, i) => (
             <div 
               key={i} 
-              className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIndex ? 'w-8 bg-emerald-500' : 'w-1.5 bg-stone-700'}`}
+              className={`h-1.5 rounded-full transition-all duration-500 ${i === activeIndex ? 'w-12 bg-[#10B981]' : 'w-1.5 bg-neutral-800'}`}
             ></div>
           ))}
         </div>

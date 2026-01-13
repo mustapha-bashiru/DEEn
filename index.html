@@ -3,69 +3,128 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ask the Shaykh – Sanctuary Edition</title>
+  <title>Ask the Scholars – Executive Matte</title>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+    "@google/genai": "https://esm.sh/@google/genai",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
   <script>
-    // Critical: Polyfill process.env BEFORE any modules (like the Gemini SDK) load.
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            neutral: { 
+              dark: '#121212',
+              card: '#1F1F1F',
+              inner: '#262626',
+              border: 'rgba(255,255,255,0.06)'
+            },
+            scholar: { 
+              gold: 'var(--primary-color)', /* Dynamically maps to Navy or Army Gold */
+              accent: 'var(--accent-color)',
+              green: '#10B981',
+              white: '#FFFFFF',
+              muted: '#737373',
+              navy: '#1e3a8a'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            arabic: ['Noto Sans Arabic', 'Amiri', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
+  <script>
     window.process = { env: { NODE_ENV: 'production' } };
   </script>
   <style>
     :root {
-      --emerald-sacred: #064e3b;
-      --sand-sacred: #f7f3f0;
-      --gold-sacred: #c5a059;
-      --charcoal-sacred: #2d2d2d;
+      --bg-main: #f8fafc;
+      --bg-accent: rgba(30, 58, 138, 0.02);
+      
+      /* Sunni Defaults (Navy) */
+      --primary-color: #3b82f6;
+      --accent-color: #1e40af;
+      --highlight: rgba(59, 130, 246, 0.15);
     }
+    
+    /* Shia Mode (Army Gold) overrides */
+    html.sect-shia {
+      --primary-color: #ca8a04;
+      --accent-color: #854d0e;
+      --highlight: rgba(202, 138, 4, 0.15);
+    }
+
+    html.dark {
+      --bg-main: #121212;
+      --bg-accent: rgba(255, 255, 255, 0.02);
+      --highlight: rgba(30, 58, 138, 0.4);
+    }
+    
+    html.dark.sect-shia {
+      --highlight: rgba(133, 77, 14, 0.35); /* Muted Army Gold Glow */
+    }
+
     body {
-      font-family: 'Poppins', sans-serif;
-      background-color: var(--sand-sacred);
-      color: var(--charcoal-sacred);
-      overflow-x: hidden;
+      font-family: 'Inter', sans-serif;
+      /* Dynamic Background Glow based on Sect */
+      background: radial-gradient(circle at 50% 35%, var(--highlight) 0%, transparent 70%), var(--bg-main) !important;
+      background-attachment: fixed !important;
+      color: #FAFAFA;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      transition: background-color 0.5s ease, background 0.5s ease;
     }
-    .font-arabic {
-      font-family: 'Noto Sans Arabic', 'Amiri', serif;
+    .dark body {
+      color: #FAFAFA;
     }
-    .animate-fade-in {
-      animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    html:not(.dark) body {
+      color: #1e293b;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
+    .executive-matte {
+      background-color: var(--card-dark);
+      border: 1px solid rgba(255,255,255,0.06);
     }
     .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.02);
+      width: 4px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #d1d5db;
-      border-radius: 12px;
+      background: var(--primary-color);
+      opacity: 0.4;
+      border-radius: 10px;
     }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: var(--gold-sacred);
+    .pattern-dots {
+      background-image: radial-gradient(var(--bg-accent) 1px, transparent 0);
+      background-size: 30px 30px;
     }
-    .pattern-bg {
-      background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='%23064e3b' fill-opacity='0.02'/%3E%3C/svg%3E");
+    .mask-fade {
+      mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+    }
+    .rounded-executive {
+      border-radius: 2rem;
+    }
+    .rounded-executive-inner {
+      border-radius: 1.2rem;
     }
   </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react/": "https://esm.sh/react@19.0.0/",
-    "react-dom": "https://esm.sh/react-dom@19.0.0",
-    "react-dom/": "https://esm.sh/react-dom@19.0.0/",
-    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "react/jsx-runtime": "https://esm.sh/react@19.0.0/jsx-runtime",
-    "@google/genai": "https://esm.sh/@google/genai@1.34.0"
-  }
-}
-</script>
 </head>
-<body class="pattern-bg">
+<body class="pattern-dots">
   <div id="root"></div>
   <script type="module" src="index.tsx"></script>
 </body>

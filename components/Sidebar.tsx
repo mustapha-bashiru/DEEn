@@ -13,130 +13,154 @@ interface SidebarProps {
   onOpenAuth: () => void;
   onOpenNews: () => void;
   onOpenLive: () => void;
-  onOpenMap: () => void;
+  onOpenMap: (query: string) => void;
   currentSect: Sect;
   currentView: string;
   onNavigate: (view: 'chat' | 'bookmarks' | 'quran' | 'arts' | 'live') => void;
+  onNewInquiry: () => void;
   onUtilityAction: (action: 'notifications' | 'settings' | 'share' | 'rate') => void;
   hasNotifications: boolean;
+  themeMode: 'system' | 'light' | 'dark';
+  onThemeChange: (mode: 'system' | 'light' | 'dark') => void;
+  onLegacyLesson: () => void;
+  setLang: (l: Language) => void;
+  locationName: string | null;
+  onRefreshLocation: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
-  isOpen, onClose, lang, user, progress, onLogout, onOpenAuth, onOpenNews, onOpenLive, onOpenMap, currentSect, currentView, onNavigate, onUtilityAction, hasNotifications 
+  isOpen, onClose, lang, user, progress, onLogout, onOpenAuth, onOpenNews, onOpenLive, onOpenMap, currentSect, currentView, onNavigate, onNewInquiry, onUtilityAction, hasNotifications, themeMode, onThemeChange, onLegacyLesson, setLang, locationName, onRefreshLocation
 }) => {
   const t = translations[lang];
-
-  const brandColor = currentSect === 'Sunni' ? 'bg-emerald-800' : 'bg-teal-900';
-  const xpColor = currentSect === 'Sunni' ? 'bg-emerald-500' : 'bg-teal-500';
 
   const NavItem = ({ icon, label, onClick, active, colorClass = "" }: any) => (
     <button
       onClick={onClick}
-      className={`w-full flex items-center space-x-4 px-4 py-3.5 rounded-2xl transition-all group ${active ? 'bg-stone-100 shadow-sm border border-stone-200/50' : 'hover:bg-stone-50'}`}
+      className={`w-full flex items-center space-x-4 space-x-reverse px-5 py-4 rounded-2xl transition-all group ${active ? 'bg-white/5 dark:bg-white/5 border border-scholar-gold/20' : 'hover:bg-white/5 dark:hover:bg-white/5 border border-transparent'}`}
     >
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${active ? (currentSect === 'Sunni' ? 'bg-emerald-800 text-white shadow-lg' : 'bg-teal-900 text-white shadow-lg') : 'bg-stone-50 group-hover:bg-white text-stone-400 group-hover:text-stone-600'} ${colorClass}`}>
-        <i className={`fas ${icon} text-sm ${active ? 'scale-110' : ''}`}></i>
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${active ? 'bg-scholar-gold text-[#FAFAFA] dark:text-[#121212]' : 'bg-black/5 dark:bg-[#1F1F1F] text-scholar-muted group-hover:text-neutral-900 dark:group-hover:text-white'} ${colorClass}`}>
+        <i className={`fas ${icon} text-sm`}></i>
       </div>
-      <span className={`text-sm font-bold ${active ? 'text-stone-900' : 'text-stone-600'}`}>{label}</span>
-      {active && <div className={`ml-auto w-1.5 h-1.5 rounded-full ${currentSect === 'Sunni' ? 'bg-emerald-500' : 'bg-teal-500'}`}></div>}
+      <span className={`text-[11px] font-black uppercase tracking-widest ${active ? 'text-neutral-900 dark:text-white' : 'text-scholar-muted group-hover:text-neutral-900 dark:group-hover:text-white'}`}>{label}</span>
+      {active && <div className={`mr-auto ml-0 w-1.5 h-1.5 bg-scholar-gold rounded-full shadow-[0_0_8px_var(--primary-color)]`}></div>}
     </button>
   );
 
   const UtilityItem = ({ icon, label, onClick, badge, colorClass = "" }: any) => (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl transition-all hover:bg-stone-100 group"
+      className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:bg-white/5 dark:hover:bg-white/5 group border border-transparent hover:border-black/5 dark:hover:border-white/5"
     >
-      <div className="flex items-center space-x-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all bg-stone-50 group-hover:bg-white group-hover:shadow-md border border-stone-100 ${colorClass}`}>
-          <i className={`fas ${icon} text-xs`}></i>
+      <div className="flex items-center space-x-4 space-x-reverse">
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-black/5 dark:bg-[#1F1F1F] text-scholar-muted group-hover:text-scholar-gold ${colorClass}`}>
+          <i className={`fas ${icon} text-[10px]`}></i>
         </div>
-        <span className="text-xs font-bold text-stone-700 tracking-tight group-hover:text-stone-900">{label}</span>
+        <span className="text-[10px] font-black text-scholar-muted uppercase tracking-[0.2em] group-hover:text-neutral-900 dark:group-hover:text-white transition-colors">{label}</span>
       </div>
-      {badge && <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-sm animate-pulse">{badge}</span>}
+      {badge && <span className="bg-scholar-gold text-white dark:text-[#1F1F1F] text-[9px] font-black px-2 py-0.5 rounded-sm">{badge}</span>}
     </button>
   );
 
   return (
     <>
-      {isOpen && <div className="fixed inset-0 bg-black/40 z-[70] backdrop-blur-sm transition-opacity" onClick={onClose} />}
+      {isOpen && <div className="fixed inset-0 bg-black/70 z-[70] transition-opacity backdrop-blur-sm" onClick={onClose} />}
       
-      <aside className={`fixed top-0 bottom-0 left-0 w-80 bg-white shadow-2xl flex flex-col z-[80] transform transition-transform duration-500 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-8 border-b flex flex-col items-center text-center space-y-4">
+      <aside 
+        className={`fixed top-0 bottom-0 ${lang === 'ar' ? 'right-0' : 'left-0'} w-80 bg-white dark:bg-[#1A1A1A] border-r border-black/5 dark:border-white/5 shadow-2xl flex flex-col z-[80] transform transition-transform duration-500 ease-in-out ${isOpen ? 'translate-x-0' : (lang === 'ar' ? 'translate-x-full' : '-translate-x-full')}`} 
+        dir={lang === 'ar' ? 'rtl' : 'ltr'}
+      >
+        <div className="p-10 flex flex-col items-center text-center space-y-5">
+          {/* Location Indicator (Avatar is Red) */}
+          <div 
+            onClick={onRefreshLocation}
+            className="flex items-center space-x-2 space-x-reverse px-4 py-1.5 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-full cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-all mb-1 group"
+          >
+            <i className={`fas fa-location-dot text-[9px] text-red-600 group-hover:animate-bounce`}></i>
+            <span className="text-[8px] font-black uppercase tracking-widest text-scholar-muted group-hover:text-neutral-900 dark:group-hover:text-white">
+              {locationName || "Ilorin, Nigeria"}
+            </span>
+          </div>
+
           <div className="relative group">
-            <div className={`w-20 h-20 rounded-[2rem] ${user ? brandColor : 'bg-stone-200'} flex items-center justify-center text-white border-4 border-stone-50 shadow-xl overflow-hidden transition-all group-hover:rotate-3`}>
+            <div className={`w-20 h-20 bg-black/5 dark:bg-[#2C2C2C] flex items-center justify-center text-scholar-gold border border-black/5 dark:border-white/10 shadow-xl rounded-[1.5rem] overflow-hidden transition-all group-hover:rotate-6 ring-2 ring-scholar-gold/20`}>
               {user ? (
                 <span className="text-2xl font-black">{user.name.charAt(0).toUpperCase()}</span>
               ) : (
-                <i className="fas fa-user-secret text-2xl text-stone-400"></i>
+                <i className="fas fa-mosque text-2xl opacity-80"></i>
               )}
             </div>
-            {user && (
-              <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-xl border shadow-lg flex items-center justify-center text-amber-600">
-                <i className="fas fa-crown text-[10px]"></i>
-              </div>
-            )}
           </div>
           
-          <div>
-            <h3 className="text-base font-black text-stone-900 leading-tight">{user ? user.name : 'Guest Seeker'}</h3>
-            <p className={`text-[9px] font-black uppercase tracking-[0.2em] mt-1 ${currentSect === 'Sunni' ? 'text-emerald-600' : 'text-teal-600'}`}>
-              Level {progress.level} Student
+          <div className="space-y-1">
+            <h3 className="text-sm font-black text-neutral-900 dark:text-white uppercase tracking-widest leading-tight">
+              {user ? user.name : t.studentOfKnowledge}
+            </h3>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-scholar-gold">
+              Level {progress.level} Scholar
             </p>
           </div>
 
-          <div className="w-full space-y-2">
-            <div className="flex items-center justify-between text-[9px] font-black text-stone-400 uppercase">
-              <span>XP Journey</span>
-              <span>{Math.floor((progress.xp % 1750) / 17.5)}%</span>
+          <div className="w-full space-y-2 pt-2">
+            <div className={`flex items-center justify-between text-[9px] font-black text-scholar-muted uppercase tracking-widest`}>
+              <span>Scholar XP</span>
+              <span className="text-scholar-gold">{Math.floor((progress.xp % 1750) / 17.5)}%</span>
             </div>
-            <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden border">
-              <div className={`h-full ${xpColor} transition-all duration-1000`} style={{ width: `${(progress.xp % 1750) / 17.5}%` }}></div>
+            <div className="h-1.5 w-full bg-black/5 dark:bg-[#1F1F1F] rounded-full overflow-hidden">
+              <div className="h-full bg-scholar-gold transition-all duration-1000 shadow-[0_0_8px_var(--primary-color)]" style={{ width: `${(progress.xp % 1750) / 17.5}%` }}></div>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-6 py-2 space-y-8 custom-scrollbar">
           <section className="space-y-1">
-            <NavItem icon="fa-message" label="Inquiry" onClick={() => onNavigate('chat')} active={currentView === 'chat'} />
-            <NavItem icon="fa-book-quran" label="Quran Explorer" onClick={() => onNavigate('quran')} active={currentView === 'quran'} />
-            <NavItem icon="fa-palette" label="Sacred Arts" onClick={() => onNavigate('arts')} active={currentView === 'arts'} />
-            <NavItem icon="fa-bookmark" label="Wisdom Library" onClick={() => onNavigate('bookmarks')} active={currentView === 'bookmarks'} />
+            <div className="px-5 mb-2 text-[8px] font-black text-scholar-muted uppercase tracking-[0.3em] opacity-40">{t.sectionNavigation}</div>
+            <NavItem icon="fa-feather" label={t.navInquiry} onClick={onNewInquiry} active={currentView === 'chat'} />
+            <NavItem icon="fa-book-quran" label={t.navQuran} onClick={() => onNavigate('quran')} active={currentView === 'quran'} />
+            <NavItem icon="fa-wand-magic-sparkles" label={t.navArts} onClick={() => onNavigate('arts')} active={currentView === 'arts'} />
+            <NavItem icon="fa-pen-fancy" label={t.toolLegacy} onClick={onLegacyLesson} active={false} />
+            <NavItem icon="fa-bolt" label={t.toolNews} onClick={onOpenNews} active={false} />
           </section>
 
-          <section className="space-y-1 pt-4 border-t border-stone-100">
-            <div className="px-4 mb-2 text-[8px] font-black text-stone-400 uppercase tracking-widest">Knowledge Stream</div>
-            <UtilityItem icon="fa-rss" label="Latest Muslim News" onClick={onOpenNews} colorClass="text-purple-600" />
-            <UtilityItem icon="fa-tower-broadcast" label="Live Majlis" onClick={onOpenLive} colorClass="text-emerald-600" />
-            <UtilityItem icon="fa-map-location-dot" label="Nearby Mosques" onClick={onOpenMap} colorClass="text-amber-600" />
+          <section className="space-y-1 pt-6 border-t border-black/5 dark:border-white/5">
+            <div className="px-5 mb-2 text-[8px] font-black text-scholar-muted uppercase tracking-[0.3em] opacity-40">{t.sectionNearby}</div>
+            <UtilityItem icon="fa-mosque" label={t.toolMosque} onClick={() => onOpenMap("Find nearby mosques.")} />
+            <UtilityItem icon="fa-utensils" label={t.toolRestaurant} onClick={() => onOpenMap("Find nearby Halal restaurants.")} />
+            <UtilityItem icon="fa-tower-broadcast" label={t.toolLive} onClick={onOpenLive} colorClass="text-emerald-500" />
           </section>
 
-          <section className="space-y-1 pt-4 border-t border-stone-100">
-            <div className="px-4 mb-2 text-[8px] font-black text-stone-400 uppercase tracking-widest">Preferences</div>
-            <UtilityItem icon="fa-bell" label="Notifications" badge={hasNotifications ? "1" : undefined} onClick={() => onUtilityAction('notifications')} colorClass="text-blue-500" />
-            <UtilityItem icon="fa-gear" label="Settings" onClick={() => onUtilityAction('settings')} colorClass="text-stone-500" />
-            <UtilityItem icon="fa-share-nodes" label="Share App" onClick={() => onUtilityAction('share')} colorClass="text-stone-500" />
-            <UtilityItem icon="fa-star" label="Rate the Sanctuary" onClick={() => onUtilityAction('rate')} colorClass="text-stone-500" />
+          <section className="space-y-1 pt-6 border-t border-black/5 dark:border-white/5">
+            <div className="px-5 mb-2 text-[8px] font-black text-scholar-muted uppercase tracking-[0.3em] opacity-40">{t.sectionSystem}</div>
+            <UtilityItem icon="fa-gear" label={t.toolSettings} onClick={() => onUtilityAction('settings')} />
           </section>
         </div>
 
-        <div className="p-6 border-t bg-stone-50">
+        <div className="p-8 border-t border-black/5 dark:border-white/5 bg-black/5 dark:bg-[#1F1F1F] flex flex-col space-y-4">
           {user ? (
             <button 
               onClick={onLogout}
-              className="w-full flex items-center justify-center space-x-3 py-3 rounded-2xl bg-white border border-red-100 text-red-500 text-xs font-bold hover:bg-red-50 transition-all shadow-sm"
+              className="w-full flex items-center justify-center space-x-3 space-x-reverse py-3.5 bg-white dark:bg-[#262626] border border-red-500/20 text-red-400 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all rounded-2xl"
             >
-              <i className="fas fa-sign-out-alt"></i>
+              <i className="fas fa-door-open"></i>
               <span>{t.logout}</span>
             </button>
           ) : (
             <button 
               onClick={onOpenAuth}
-              className="w-full py-3.5 rounded-2xl bg-emerald-900 text-white text-xs font-bold shadow-xl shadow-emerald-900/20 active:scale-95 transition-all"
+              className="w-full py-4 bg-scholar-gold text-white dark:text-neutral-dark text-[10px] font-black uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all rounded-2xl shadow-[0_0_15px_rgba(var(--primary-color-rgb),0.3)]"
             >
-              Sign In to Sanctuary
+              {lang === 'ar' ? 'دخول المحراب' : 'Access Sanctuary'}
             </button>
           )}
+          
+          <div className="flex items-center justify-between px-2 pt-2">
+            <span className="text-[9px] font-black text-scholar-muted uppercase tracking-[0.2em] opacity-40">v1.5.4 Sanctuary</span>
+            <button 
+              onClick={() => onThemeChange(themeMode === 'dark' ? 'light' : 'dark')}
+              className="w-8 h-8 rounded-full bg-white/5 dark:bg-white/5 border border-black/5 dark:border-white/5 flex items-center justify-center text-scholar-muted hover:text-scholar-gold transition-all"
+            >
+              <i className={`fas ${themeMode === 'dark' ? 'fa-sun' : 'fa-moon'} text-[10px]`}></i>
+            </button>
+          </div>
         </div>
       </aside>
     </>

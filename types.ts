@@ -30,6 +30,30 @@ export interface GroundingLink {
   uri: string;
   title: string;
   type: 'web' | 'maps';
+  address?: string;
+  description?: string;
+}
+
+export interface SacredArt {
+  id: string;
+  url: string;
+  prompt: string;
+  timestamp: number;
+}
+
+export interface LiveTranscriptItem {
+  id: string;
+  role: 'Scholar' | 'Seeker';
+  text: string;
+  timestamp: number;
+}
+
+export interface LiveSessionRecord {
+  id: string;
+  title: string;
+  timestamp: number;
+  transcript: LiveTranscriptItem[];
+  audioBlobUrl?: string; // For local session playback
 }
 
 export interface Message {
@@ -46,6 +70,10 @@ export interface Message {
   resources?: ResourceLink[]; 
   articleLeads?: ArticleLead[];
   isLegacyLesson?: boolean;
+  feedback?: {
+    rating: 'up' | 'down';
+    comment?: string;
+  };
 }
 
 export interface ChatSession {
@@ -56,6 +84,7 @@ export interface ChatSession {
   createdAt: number;
   sect: Sect;
   madhab: Madhab;
+  isBookmarked?: boolean;
 }
 
 export interface QuizQuestion {

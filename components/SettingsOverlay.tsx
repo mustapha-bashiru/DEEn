@@ -11,9 +11,13 @@ interface SettingsOverlayProps {
   madhab: Madhab;
   setMadhab: (m: Madhab) => void;
   onClose: () => void;
+  themeMode: 'system' | 'light' | 'dark';
+  onThemeChange: (mode: 'system' | 'light' | 'dark') => void;
 }
 
-const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ lang, setLang, sect, setSect, madhab, setMadhab, onClose }) => {
+const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ 
+  lang, setLang, sect, setSect, madhab, setMadhab, onClose, themeMode, onThemeChange 
+}) => {
   const madhabOptions: Madhab[] = ['General', 'Hanafi', 'Maliki', 'Shafi\'i', 'Hanbali', 'Usuli', 'Akhbari'];
 
   return (
@@ -24,16 +28,31 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ lang, setLang, sect, 
             <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-600">
               <i className="fas fa-gear"></i>
             </div>
-            <h2 className="text-xl font-bold text-stone-900">App Settings</h2>
+            <h2 className="text-xl font-bold text-stone-900">Sanctuary Configuration</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-stone-50 rounded-full transition-colors text-stone-400">
             <i className="fas fa-times"></i>
           </button>
         </div>
 
-        <div className="p-8 space-y-8">
-          <section className="space-y-4">
-            <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Display Language</h3>
+        <div className="p-8 space-y-6 overflow-y-auto max-h-[60vh] custom-scrollbar">
+          <section className="space-y-3">
+            <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Appearance Mode</h3>
+            <div className="grid grid-cols-3 gap-2 bg-stone-50 p-1 rounded-2xl">
+              {(['system', 'light', 'dark'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => onThemeChange(mode)}
+                  className={`py-2 text-[10px] font-black uppercase rounded-xl transition-all ${themeMode === mode ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Language</h3>
             <div className="grid grid-cols-2 gap-3">
               <button 
                 onClick={() => setLang('en')}
@@ -50,7 +69,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ lang, setLang, sect, 
             </div>
           </section>
 
-          <section className="space-y-4">
+          <section className="space-y-3">
             <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Scholarly Perspective</h3>
             <div className="grid grid-cols-2 gap-3">
               <button 
@@ -68,7 +87,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ lang, setLang, sect, 
             </div>
           </section>
 
-          <section className="space-y-4">
+          <section className="space-y-3">
             <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Active Madhab</h3>
             <div className="relative">
               <select 
@@ -92,7 +111,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ lang, setLang, sect, 
             onClick={onClose}
             className="w-full bg-stone-900 text-white py-4 rounded-2xl font-bold shadow-xl active:scale-95 transition-all"
           >
-            Save Changes
+            Confirm Configuration
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 {
-  "name": "Ask the Shaykh – AI Religious Assistant",
+  "name": " SabilLink",
   "description": "A specialized AI assistant providing accurate Islamic guidance with real-time hardware integration for vision and voice inquiries.",
   "requestFramePermissions": [
     "camera",
