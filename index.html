@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,7 +32,7 @@
               border: 'rgba(255,255,255,0.06)'
             },
             scholar: { 
-              gold: 'var(--primary-color)', /* Dynamically maps to Navy or Army Gold */
+              gold: 'var(--primary-color)',
               accent: 'var(--accent-color)',
               green: '#10B981',
               white: '#FFFFFF',
@@ -56,14 +57,11 @@
     :root {
       --bg-main: #f8fafc;
       --bg-accent: rgba(30, 58, 138, 0.02);
-      
-      /* Sunni Defaults (Navy) */
       --primary-color: #3b82f6;
       --accent-color: #1e40af;
       --highlight: rgba(59, 130, 246, 0.15);
     }
     
-    /* Shia Mode (Army Gold) overrides */
     html.sect-shia {
       --primary-color: #ca8a04;
       --accent-color: #854d0e;
@@ -77,51 +75,26 @@
     }
     
     html.dark.sect-shia {
-      --highlight: rgba(133, 77, 14, 0.35); /* Muted Army Gold Glow */
+      --highlight: rgba(133, 77, 14, 0.35);
     }
 
     body {
       font-family: 'Inter', sans-serif;
-      /* Dynamic Background Glow based on Sect */
       background: radial-gradient(circle at 50% 35%, var(--highlight) 0%, transparent 70%), var(--bg-main) !important;
       background-attachment: fixed !important;
-      color: #FAFAFA;
       margin: 0;
       padding: 0;
       overflow: hidden;
-      transition: background-color 0.5s ease, background 0.5s ease;
     }
-    .dark body {
-      color: #FAFAFA;
+
+    .prose p {
+      margin-bottom: 1.5rem !important;
+      line-height: 1.6 !important; 
     }
-    html:not(.dark) body {
-      color: #1e293b;
-    }
-    .executive-matte {
-      background-color: var(--card-dark);
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: var(--primary-color);
-      opacity: 0.4;
-      border-radius: 10px;
-    }
-    .pattern-dots {
-      background-image: radial-gradient(var(--bg-accent) 1px, transparent 0);
-      background-size: 30px 30px;
-    }
-    .mask-fade {
-      mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
-    }
-    .rounded-executive {
-      border-radius: 2rem;
-    }
-    .rounded-executive-inner {
-      border-radius: 1.2rem;
-    }
+
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; }
+    .pattern-dots { background-image: radial-gradient(var(--bg-accent) 1px, transparent 0); background-size: 30px 30px; }
   </style>
 </head>
 <body class="pattern-dots">

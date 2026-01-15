@@ -99,8 +99,9 @@ export interface UserProgress {
   xp: number;
   level: number;
   streak: number;
-  lastLessonDate: number | null;
-  lastQuizDate: number | null;
+  // lastLessonDate and lastQuizDate changed to string | null to support daily marker comparisons with toDateString()
+  lastLessonDate: string | null;
+  lastQuizDate: string | null;
   completedQuizzes: string[];
   badges: string[];
 }
@@ -111,6 +112,8 @@ export interface User {
   email: string;
   joinedAt: number;
   progress: UserProgress;
+  preferredSect?: Sect;
+  preferredMadhab?: Madhab;
 }
 
 export interface QuranVerse {

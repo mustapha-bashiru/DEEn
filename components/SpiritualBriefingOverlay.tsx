@@ -11,20 +11,16 @@ interface SpiritualBriefingOverlayProps {
   onNavigate: (view: any) => void;
 }
 
-/**
- * Utility to convert Western Arabic numerals (0-9) to Eastern Arabic numerals (٠-٩)
- */
 const toArabicNumerals = (str: string | number): string => {
   const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
   return String(str).replace(/[0-9]/g, (w) => arabicNumbers[parseInt(w)]);
 };
 
-const SpiritualBriefingOverlay: React.FC<SpiritualBriefingOverlayProps> = ({ lang, setLang, locationName, onClose, onNavigate }) => {
+const SpiritualBriefingOverlay: React.FC<SpiritualBriefingOverlayProps> = ({ lang, locationName, onClose, onNavigate }) => {
   const [data, setData] = useState<BriefingData | null>(null);
   const [loading, setLoading] = useState(true);
   const t = translations[lang];
 
-  // Localize Date with potential numeral conversion
   const rawDate = new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { 
     month: 'long', 
     day: 'numeric', 
@@ -60,29 +56,14 @@ const SpiritualBriefingOverlay: React.FC<SpiritualBriefingOverlayProps> = ({ lan
   return (
     <div className={`fixed inset-0 z-[260] flex items-center justify-center p-6 bg-stone-50/95 dark:bg-black/95 backdrop-blur-xl animate-fade-in overflow-y-auto ${lang === 'ar' ? 'font-arabic' : ''}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       
-      {/* Absolute Top Controls */}
-      <div className="absolute top-10 left-0 right-0 px-10 flex items-center justify-between z-50">
-        <div className="flex items-center bg-white dark:bg-white/5 border border-stone-200 dark:border-white/10 p-1 rounded-full backdrop-blur-2xl shadow-2xl">
-          <button 
-            onClick={() => setLang('ar')} 
-            className={`px-6 py-2 text-[10px] font-black uppercase rounded-full transition-all flex items-center ${lang === 'ar' ? 'bg-scholar-gold text-white shadow-xl' : 'text-stone-400 dark:text-stone-500'}`}
-          >
-            العربية
-          </button>
-          <button 
-            onClick={() => setLang('en')} 
-            className={`px-6 py-2 text-[10px] font-black uppercase rounded-full transition-all flex items-center ${lang === 'en' ? 'bg-scholar-gold text-white shadow-xl' : 'text-stone-400 dark:text-stone-500'}`}
-          >
-            English
-          </button>
-        </div>
-        
+      {/* Top Controls */}
+      <div className="absolute top-10 right-10 z-50">
         <button onClick={onClose} className="w-12 h-12 rounded-full bg-white dark:bg-white/5 border border-stone-200 dark:border-white/10 text-stone-400 dark:text-stone-500 flex items-center justify-center hover:text-neutral-900 dark:hover:text-white transition-all hover:bg-stone-100 dark:hover:bg-white/10">
           <i className="fas fa-times text-lg"></i>
         </button>
       </div>
 
-      <div className="max-w-xl w-full bg-white dark:bg-[#121212] border border-stone-200 dark:border-white/5 shadow-[0_0_150px_rgba(var(--primary-color-rgb),0.15)] overflow-hidden flex flex-col rounded-[3.5rem] my-auto relative">
+      <div className="max-w-xl w-full bg-white dark:bg-[#121212] border border-stone-200 dark:border-white/5 shadow-2xl overflow-hidden flex flex-col rounded-[3.5rem] my-auto relative">
         <div className="absolute inset-0 opacity-5 pointer-events-none">
           <i className="fas fa-kaaba text-[20rem] absolute -bottom-20 -right-20 rotate-12 text-stone-900 dark:text-white"></i>
         </div>
@@ -103,7 +84,7 @@ const SpiritualBriefingOverlay: React.FC<SpiritualBriefingOverlayProps> = ({ lan
               <div className="px-4 py-1.5 bg-stone-100 dark:bg-white/5 rounded-full border border-stone-200 dark:border-white/5 flex items-center space-x-2 space-x-reverse">
                 <i className="fas fa-location-dot text-[10px] text-scholar-gold"></i>
                 <span className="text-scholar-muted text-[9px] font-black uppercase tracking-widest">
-                  {locationName ? (lang === 'ar' ? locationName.replace('Nigeria', 'نيجيريا') : locationName) : (lang === 'ar' ? 'موقع عام' : 'Global Location')}
+                  {locationName ? locationName : "Resolving Location..."}
                 </span>
               </div>
             </div>

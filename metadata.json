@@ -1,5 +1,5 @@
 {
-  "name": " SabilLink",
+  "name": "SebilLink",
   "description": "A specialized AI assistant providing accurate Islamic guidance with real-time hardware integration for vision and voice inquiries.",
   "requestFramePermissions": [
     "camera",
