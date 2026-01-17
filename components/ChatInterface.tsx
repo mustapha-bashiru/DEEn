@@ -64,7 +64,6 @@ const QuickPrompts = ({ lang, sect, onSelect }: { lang: Language, sect: Sect, on
   );
 };
 
-// Use React.FC to properly handle intrinsic props like 'key' when mapping
 const SourceChip: React.FC<{ source: GroundingLink }> = ({ source }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -230,7 +229,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className="absolute top-4 right-8 z-50 flex items-center space-x-3">
         <button 
           onClick={onOpenLive}
-          className="w-10 h-10 rounded-full bg-emerald-900 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform active:scale-95"
+          className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform active:scale-95 border border-emerald-500/20"
           title="Live Majlis"
         >
           <i className="fas fa-tower-broadcast text-xs"></i>
