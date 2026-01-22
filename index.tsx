@@ -19,7 +19,8 @@ root.render(
 // Register Service Worker for Offline Mode
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(registration => {
+    // Using relative path without leading slash to ensure correct origin matching in frames
+    navigator.serviceWorker.register('./sw.js').then(registration => {
       console.log('Sanctuary SW registered: ', registration.scope);
     }).catch(error => {
       console.log('Sanctuary SW registration failed: ', error);

@@ -191,6 +191,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -218,6 +219,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setInput('');
       setPendingAttachments([]);
       setIsActionsExpanded(false);
+    }
+  };
+
+  const applyFormatting = (marker: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = input;
+    const before = text.substring(0, start);
+    const selected = text.substring(start, end);
+    const after = text.substring(end);
+    
+    const newText = `${before}${marker}${selected}${marker}${after}`;
+    setInput(newText);
+    
+    // Restore focus and selection
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + marker.length, end + marker.length);
+    }, 0);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'b') {
+        e.preventDefault();
+        applyFormatting('**');
+      } else if (e.key === 'i') {
+        e.preventDefault();
+        applyFormatting('*');
+      }
+    }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -296,7 +333,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 <button className="w-10 h-10 rounded-full bg-stone-50 dark:bg-black/40 text-scholar-muted hover:text-scholar-gold flex items-center justify-center shadow-sm"><i className="fas fa-camera"></i></button>
               </div>
             </div>
-            <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())} placeholder="Consult the Sanctuary..." className={`flex-1 bg-transparent border-none py-4 px-2 text-sm focus:outline-none dark:text-white resize-none max-h-32 custom-scrollbar transition-all ${isActionsExpanded ? 'ml-24' : ''}`} rows={1} />
+            <textarea 
+              ref={textareaRef}
+              value={input} 
+              onChange={(e) => setInput(e.target.value)} 
+              onKeyDown={handleKeyDown}
+              placeholder="Consult the Sanctuary..." 
+              className={`flex-1 bg-transparent border-none py-4 px-2 text-sm focus:outline-none dark:text-white resize-none max-h-32 custom-scrollbar transition-all ${isActionsExpanded ? 'ml-24' : ''}`} 
+              rows={1} 
+            />
             {(input.trim() || pendingAttachments.length > 0) ? (
               <button onClick={handleSendMessage} className="w-12 h-12 bg-scholar-gold text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"><i className="fas fa-paper-plane text-sm"></i></button>
             ) : (

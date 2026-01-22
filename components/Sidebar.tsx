@@ -27,6 +27,38 @@ interface SidebarProps {
   onRefreshLocation: () => void;
 }
 
+const SebilLogo = ({ className = "w-6 h-6", color = "currentColor" }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* The Path (Road) - Perspective tapering from bottom to top */}
+    <path 
+      d="M30 95C40 70 65 70 55 45C50 35 55 30 70 28" 
+      stroke={color} 
+      strokeWidth="14" 
+      strokeLinecap="round" 
+    />
+    {/* Road center markings tracing the curve perfectly using dasharray */}
+    <path 
+      d="M30 95C40 70 65 70 55 45C50 35 55 30 70 28" 
+      stroke="white" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeDasharray="4 8"
+      opacity="0.6"
+    />
+    {/* Traditional Islamic Crescent (facing upward) */}
+    <path 
+      d="M70 22C61.1634 22 54 14.8366 54 6C54 4.5 54.2 3.1 54.6 1.7C50.6 3.9 48 8.1 48 13C48 20.732 54.268 27 62 27C67.3 27 71.9 24 74.2 19.6C72.9 21.1 71.3 22.3 69.5 23.1L70 22Z" 
+      fill={color} 
+      transform="rotate(-90 70 15) translate(0, -5)"
+    />
+    {/* Standard 5-pointed star */}
+    <path 
+      d="M70 4L71 7H74L71.5 8.5L72.5 11.5L70 9.5L67.5 11.5L68.5 8.5L66 7H69L70 4Z" 
+      fill={color} 
+    />
+  </svg>
+);
+
 const Sidebar: React.FC<SidebarProps> = ({ 
   isOpen, onClose, lang, user, progress, onLogout, onOpenAuth, onOpenNews, onOpenLive, onOpenMap, currentView, onNavigate, onNewInquiry, onUtilityAction, themeMode, onThemeChange, onLegacyLesson, locationName, onRefreshLocation
 }) => {
@@ -86,19 +118,28 @@ const Sidebar: React.FC<SidebarProps> = ({
         className={`fixed top-0 bottom-0 ${lang === 'ar' ? 'right-0' : 'left-0'} w-80 bg-white dark:bg-[#1A1A1A] border-r border-black/5 dark:border-white/5 shadow-2xl flex flex-col z-[80] transform transition-transform duration-500 ${isOpen ? 'translate-x-0' : (lang === 'ar' ? 'translate-x-full' : '-translate-x-full')}`} 
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
-        {/* Profile & Location Header */}
         <div className="p-10 flex flex-col items-center text-center space-y-5">
-          <div 
+          {/* Location Toggle Button - Now at the Top */}
+          <button 
             onClick={onRefreshLocation}
-            className="flex items-center space-x-2 space-x-reverse px-4 py-2 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-full cursor-pointer hover:bg-black/10 transition-all mb-1 group/loc shadow-sm"
+            className={`mb-2 px-4 py-2 rounded-full border transition-all flex items-center space-x-2 space-x-reverse group/loc shadow-sm ${
+              locationName === "Geo access blocked" 
+                ? 'bg-red-50 border-red-100 dark:bg-red-900/10 dark:border-red-900/20' 
+                : 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/20'
+            }`}
           >
-            <i className="fas fa-location-dot text-[9px] text-red-600 animate-pulse"></i>
-            <span className="text-[9px] font-black uppercase tracking-widest text-scholar-muted group-hover/loc:text-neutral-900 dark:group-hover/loc:text-white">
-              {locationName ? locationName : "Resolving Location..."}
+            <i className={`fas fa-location-crosshairs text-[10px] ${
+              locationName === "Geo access blocked" ? 'text-red-500' : 'text-emerald-500 animate-pulse'
+            } group-hover/loc:rotate-180 transition-transform`}></i>
+            <span className={`text-[9px] font-black uppercase tracking-widest ${
+              locationName === "Geo access blocked" ? 'text-red-600' : 'text-emerald-600'
+            }`}>
+              {locationName ? locationName : "Resolving..."}
             </span>
-          </div>
-          <div className="w-20 h-20 bg-scholar-gold rounded-[1.5rem] flex items-center justify-center text-white shadow-xl border-4 border-white dark:border-stone-900">
-             {user ? <span className="text-2xl font-black">{user.name.charAt(0).toUpperCase()}</span> : <i className="fas fa-crescent text-2xl"></i>}
+          </button>
+
+          <div className="w-20 h-20 bg-scholar-gold rounded-[1.5rem] flex items-center justify-center text-white shadow-xl border-4 border-white dark:border-stone-900 transition-transform hover:scale-105">
+             {user ? <span className="text-2xl font-black">{user.name.charAt(0).toUpperCase()}</span> : <SebilLogo className="w-12 h-12" color="white" />}
           </div>
           <div className="space-y-1">
             <h3 className="text-sm font-black text-neutral-900 dark:text-white uppercase tracking-widest leading-tight">{user ? user.name : t.studentOfKnowledge}</h3>
@@ -106,7 +147,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Navigation Section */}
         <div className="flex-1 overflow-y-auto px-6 py-2 space-y-8 custom-scrollbar">
           <section className="space-y-1">
             <NavItem icon="fa-feather" label={t.navInquiry} onClick={onNewInquiry} active={currentView === 'chat'} />
@@ -124,27 +164,24 @@ const Sidebar: React.FC<SidebarProps> = ({
           </section>
         </div>
         
-        {/* Footer Area with Theme Toggle & Version Information */}
         <div className="p-8 border-t border-black/5 bg-black/5 flex flex-col space-y-4">
-          {!user && (
-            <button onClick={onOpenAuth} className="w-full py-4 bg-scholar-gold text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg rounded-2xl mb-2 hover:opacity-90 transition-all">
-              Access Sanctuary
-            </button>
-          )}
-          
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black text-scholar-muted uppercase tracking-[0.2em]">SebilLink Sanctuary</span>
-              <span className="text-[8px] font-bold text-scholar-muted/60 uppercase tracking-widest mt-0.5">v1.2.4 Premium</span>
-            </div>
-            
+          <div className="flex items-center space-x-3 space-x-reverse">
             <button 
               onClick={() => onThemeChange(themeMode === 'dark' ? 'light' : 'dark')}
-              className="w-10 h-10 rounded-xl bg-white dark:bg-[#262626] border border-black/5 text-scholar-muted flex items-center justify-center hover:text-scholar-gold transition-colors shadow-sm hover:shadow-md"
+              className="w-14 h-14 rounded-2xl bg-white/10 dark:bg-black/20 border border-black/5 dark:border-white/5 flex items-center justify-center text-scholar-muted hover:text-scholar-gold transition-all"
               title="Toggle Theme"
             >
-              <i className={`fas ${themeMode === 'dark' ? 'fa-sun' : 'fa-moon'} text-sm`}></i>
+               <i className={`fas ${themeMode === 'dark' ? 'fa-sun' : 'fa-moon'} text-sm`}></i>
             </button>
+            {!user ? (
+              <button onClick={onOpenAuth} className="flex-1 py-4 bg-scholar-gold text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg rounded-2xl hover:opacity-90 transition-all">
+                Access Sanctuary
+              </button>
+            ) : (
+              <button onClick={onLogout} className="flex-1 py-4 bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-red-500 hover:text-white transition-all">
+                {t.logout}
+              </button>
+            )}
           </div>
         </div>
       </aside>
