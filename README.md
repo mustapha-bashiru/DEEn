@@ -1,8 +1,3 @@
-
-Here's a polished GitHub README template for SebilLink:
-
----
-
 🕌 SebilLink – Mosque & Community Super App
 
 Connecting faith, food, and community through one seamless digital platform.
@@ -166,14 +161,8 @@ Distributed under the MIT License. See LICENSE for more information.
 
 📬 Contact
 
-Your Name – @your_twitter – email@example.com
+Mail: mustaphabashiru442@gmail.com
 
-Project Link: https://github.com/your-username/sebilLink
-
----
+Project Link: https://github.com/khalif442/DEEn
 
 Made with ❤️ during the hackathon. If you find this useful, please give it a ⭐!
-
----
-
-Let me know if you need a deployment guide, Firebase setup steps, or a APK download badge to add! 🚀
