@@ -163,6 +163,4 @@ Distributed under the MIT License. See LICENSE for more information.
 
 Mail: mustaphabashiru442@gmail.com
 
-Project Link: https://github.com/khalif442/DEEn
-
-Made with ❤️ during the hackathon. If you find this useful, please give it a ⭐!
+If you find this useful, please give it a ⭐!
