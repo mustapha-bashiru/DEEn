@@ -1,23 +1,16 @@
-🕌 SebilLink – Mosque & Community Super App
+## SebilLink – Mosque & Community Super App
 
 Connecting faith, food, and community through one seamless digital platform.
 
-https://img.shields.io/badge/Flutter-02569B?style=flat&logo=flutter&logoColor=white
-https://img.shields.io/badge/Firebase-FFCA28?style=flat&logo=firebase&logoColor=black
-https://img.shields.io/badge/Google%20Gemini-8E75B2?style=flat&logo=google-gemini&logoColor=white
-https://img.shields.io/badge/License-MIT-yellow.svg
-
-https://via.placeholder.com/800x400/1e3a8a/ffffff?text=SebilLink+Screenshots+%7C+QR+Menu+%2C+AI+Chat+%2C+Wallet+%2C+Community
-
-📌 About The Project
+## About The Project
 
 SebilLink is an all-in-one community super app designed to serve mosque-goers and local halal businesses. It combines digital convenience with spiritual connectivity—offering QR-based restaurant menus, an AI-powered Islamic Q&A assistant, in-app wallet, food delivery integration, loyalty rewards, and a community feed—all within a single intuitive interface.
 
-Built with ❤️ for hackathon demonstration. (AI features are integrated but may require API keys for full functionality.)
+AI features are integrated but may require API keys for full functionality.)
 
-✨ Features
+## Features
 
-Feature Description
+#### Feature Description
 📲 QR Mosque Menus Restaurants near mosques can create & manage digital menus accessed via QR codes.
 🤖 Live Majlis AI Assistant Voice-enabled AI using Gemini API to answer religious questions in real-time.
 💳 Integrated Digital Wallet Secure payments for donations, food orders, and mosque services.
@@ -26,7 +19,7 @@ Feature Description
 📢 Community Hub User reviews, event updates, and community announcements.
 🌙 Prayer Times & Mosque Locator Integrated prayer schedules with nearby mosque finder.
 
-🛠️ Tech Stack
+## Tech Stack
 
 · Frontend: Flutter (iOS & Android)
 · Backend: Node.js + Express
@@ -37,7 +30,7 @@ Feature Description
 · Maps & Location: Google Maps API
 · State Management: Provider / Riverpod
 
-🚀 Getting Started
+ ## Getting Started
 
 Prerequisites
 
@@ -97,7 +90,7 @@ sebilLink/
 └── firebase_config/     # Firebase config files
 ```
 
-🧠 AI Features (Live Majlis & Veo)
+## AI Features (Live Majlis & Veo)
 
 The Live Majlis system uses Google's Gemini API to provide:
 
@@ -108,7 +101,7 @@ The Live Majlis system uses Google's Gemini API to provide:
 
 Note: Due to free-tier limitations, the AI features are demonstrated via pre-recorded interactions in the demo video, but the integration is fully implemented in code.
 
-🔐 Environment Variables
+## Environment Variables
 
 Create a .env file in the root (or use lib/config/app_config.dart):
 
@@ -118,18 +111,18 @@ GOOGLE_MAPS_API_KEY=your_key_here
 FIREBASE_CONFIG=your_firebase_config
 ```
 
-📸 Screenshots
+## Screenshots
 
 QR Menu Scanner AI Assistant Wallet Community Feed
 https://via.placeholder.com/200x400/3b82f6/ffffff?text=QR+Menu https://via.placeholder.com/200x400/10b981/ffffff?text=AI+Chat https://via.placeholder.com/200x400/f59e0b/ffffff?text=Wallet https://via.placeholder.com/200x400/8b5cf6/ffffff?text=Community
 
-🎥 Demo Video
+## Demo Video
 
 https://img.shields.io/badge/Watch_Demo-FF0000?style=for-the-badge&logo=youtube&logoColor=white
 
 Demo shows core functionality with pre-recorded AI interactions due to API tier limits.
 
-📈 Future Roadmap
+## Future Roadmap
 
 · Add fundraising & donation tracking
 · Expand to multiple languages
@@ -138,7 +131,7 @@ Demo shows core functionality with pre-recorded AI interactions due to API tier 
 · Integration with Islamic calendars
 · Offline mode for prayers & Quran
 
-👥 Contributing
+## Contributing
 
 Contributions are welcome! Please fork the repository and create a pull request with detailed changes.
 
@@ -152,14 +145,14 @@ Contributions are welcome! Please fork the repository and create a pull request 
 
 Distributed under the MIT License. See LICENSE for more information.
 
-🙏 Acknowledgments
+## Acknowledgments
 
 · Google Gemini API
 · Flutter Community
 · Inspiration from local mosque communities
 · Halal restaurant partners for early feedback
 
-📬 Contact
+## Contact
 
 Mail: mustaphabashiru442@gmail.com
 
