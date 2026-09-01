@@ -2,7 +2,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { generateSacredArt, generateSacredVideo, generateDailyVersePrompt } from '../services/geminiService';
 import { Language, translations } from '../translations';
-import { SacredArt } from '../types';
+import { SacredArt, AiStudioBridge } from '../types';
+import { STORAGE_KEYS } from '../config/storage';
+
+/** `window.aistudio` exists only inside the AI Studio host. */
+const aiStudio = (): AiStudioBridge | undefined =>
+  (window as Window & { aistudio?: AiStudioBridge }).aistudio;
 
 interface SacredArtsProps {
   lang: Language;
@@ -22,14 +27,16 @@ const presets = [
   { id: 'daily-verse', label: 'Verse of the Day', prompt: 'AUTO_VERSE', special: true }
 ];
 
-const SacredArts: React.FC<SacredArtsProps> = ({ isPremium, onOpenAuth, onClose, lang, history, onSaveArt, onRemoveArt }) => {
+// `isPremium` and `onOpenAuth` stay in the props contract (App passes them) but
+// are unread: generation is not gated behind a paywall or sign-in today.
+const SacredArts: React.FC<SacredArtsProps> = ({ onClose, lang, history, onSaveArt, onRemoveArt }) => {
   const [activeTab, setActiveTab] = useState<'studio' | 'gallery'>('studio');
   
   const [modality, setModality] = useState<'image' | 'video'>(() => {
-    return (localStorage.getItem('sanctuary_arts_modality') as 'image' | 'video') || 'image';
+    return (localStorage.getItem(STORAGE_KEYS.artsModality) as 'image' | 'video') || 'image';
   });
   const [prompt, setPrompt] = useState(() => {
-    return localStorage.getItem('sanctuary_arts_prompt') || '';
+    return localStorage.getItem(STORAGE_KEYS.artsPrompt) || '';
   });
 
   const [loading, setLoading] = useState(false);
@@ -37,30 +44,34 @@ const SacredArts: React.FC<SacredArtsProps> = ({ isPremium, onOpenAuth, onClose,
   const [generatedAsset, setGeneratedAsset] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
-  const [searchQuery, setSearchQuery] = useState('');
+  // The gallery filters and sorts by these, but no control renders yet, so the
+  // setters are unused. Kept as state (not consts) so wiring up a search box and
+  // a sort toggle is a UI-only change.
+  const [sortOrder, _setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [searchQuery, _setSearchQuery] = useState('');
   const [hasVeoKey, setHasVeoKey] = useState(false);
 
   const t = translations[lang];
 
   useEffect(() => {
-    localStorage.setItem('sanctuary_arts_modality', modality);
-    localStorage.setItem('sanctuary_arts_prompt', prompt);
+    localStorage.setItem(STORAGE_KEYS.artsModality, modality);
+    localStorage.setItem(STORAGE_KEYS.artsPrompt, prompt);
   }, [modality, prompt]);
 
   useEffect(() => {
     const checkKey = async () => {
-      if ((window as any).aistudio?.hasSelectedApiKey) {
-        const has = await (window as any).aistudio.hasSelectedApiKey();
-        setHasVeoKey(has);
+      const hasSelectedApiKey = aiStudio()?.hasSelectedApiKey;
+      if (hasSelectedApiKey) {
+        setHasVeoKey(await hasSelectedApiKey());
       }
     };
     checkKey();
   }, [modality]);
 
   const handleOpenVeoKey = async () => {
-    if ((window as any).aistudio?.openSelectKey) {
-      await (window as any).aistudio.openSelectKey();
+    const openSelectKey = aiStudio()?.openSelectKey;
+    if (openSelectKey) {
+      await openSelectKey();
       setHasVeoKey(true);
     }
   };
@@ -104,8 +115,9 @@ const SacredArts: React.FC<SacredArtsProps> = ({ isPremium, onOpenAuth, onClose,
         prompt: label,
         timestamp: Date.now()
       });
-    } catch (err: any) {
-      if (err.message?.includes("entity was not found")) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes("entity was not found")) {
          setError("API Key verification failed. Please re-select your scholarly key.");
          setHasVeoKey(false);
       } else {

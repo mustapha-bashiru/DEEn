@@ -33,8 +33,8 @@ const QuranExplorer: React.FC<{ lang: Language; onClose: () => void }> = ({ onCl
           throw new Error("Invalid format. Use 2:255 or 112:1-4");
         }
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to retrieve verses.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to retrieve verses.");
     } finally { setLoading(false); }
   }, [rangeInput]);
 
@@ -114,7 +114,6 @@ const QuranExplorer: React.FC<{ lang: Language; onClose: () => void }> = ({ onCl
           <div className="space-y-12">
             {filteredVerses.map((v, i) => {
               const verseId = `${v.surahNumber}_${v.ayahNumber}`;
-              const isExpanded = expandedTafsirs[verseId];
 
               return (
                 <div key={i} className="bg-white/10 dark:bg-stone-900/40 backdrop-blur-md rounded-[3rem] border border-black/5 dark:border-stone-800 shadow-2xl overflow-hidden animate-fade-in transition-colors">

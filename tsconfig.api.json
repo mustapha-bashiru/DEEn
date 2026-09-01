@@ -1,0 +1,21 @@
+{
+  /*
+   * A separate project for `api/**` rather than adding it to `tsconfig.json`'s
+   * include list.
+   *
+   * The reason is the two overrides below. The base project has `lib: [DOM]` and
+   * `types: [vite/client]`, so inside it a server function can reference
+   * `window`, `localStorage`, or `import.meta.env` and typecheck cleanly — right
+   * up until it runs in a Node runtime that has none of them. Dropping DOM turns
+   * that class of mistake into a compile error, which is the only place it is
+   * cheap to find.
+   *
+   * `npm run typecheck` runs both projects.
+   */
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["node"]
+  },
+  "include": ["api/**/*.ts", "types/**/*.ts"]
+}

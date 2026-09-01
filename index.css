@@ -1,0 +1,110 @@
+/*
+ * SebilLink global stylesheet.
+ *
+ * Previously an inline <style> block plus four CDN <link> tags in index.html.
+ * Fonts and icons are now self-hosted through npm so the PWA works offline and
+ * the app makes no third-party requests on load.
+ */
+
+/*
+ * Only the latin/latin-ext and arabic subsets are pulled in — the UI ships in
+ * English and Arabic (see translations.ts), so shipping cyrillic, greek, and
+ * vietnamese woff2 files would inflate the precache for nothing.
+ */
+
+/* Inter: 300–900, matching the weights the UI uses via font-black/font-medium. */
+@import '@fontsource/inter/latin-300.css';
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/inter/latin-800.css';
+@import '@fontsource/inter/latin-900.css';
+@import '@fontsource/inter/latin-ext-400.css';
+@import '@fontsource/inter/latin-ext-700.css';
+
+/* Arabic display faces for RTL content and Quranic text. */
+@import '@fontsource/noto-sans-arabic/arabic-400.css';
+@import '@fontsource/noto-sans-arabic/arabic-700.css';
+@import '@fontsource/amiri/arabic-400.css';
+@import '@fontsource/amiri/arabic-700.css';
+
+/* Font Awesome 6 free — the UI uses `fas`/`far` class names throughout. */
+@import '@fortawesome/fontawesome-free/css/fontawesome.css';
+@import '@fortawesome/fontawesome-free/css/solid.css';
+@import '@fortawesome/fontawesome-free/css/regular.css';
+@import '@fortawesome/fontawesome-free/css/brands.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-main: #f8fafc;
+    --bg-accent: rgba(30, 58, 138, 0.02);
+    --primary-color: #3b82f6;
+    --accent-color: #1e40af;
+    --highlight: rgba(59, 130, 246, 0.15);
+  }
+
+  html.sect-shia {
+    --primary-color: #ca8a04;
+    --accent-color: #854d0e;
+    --highlight: rgba(202, 138, 4, 0.15);
+  }
+
+  html.dark {
+    --bg-main: #121212;
+    --bg-accent: rgba(255, 255, 255, 0.02);
+    --highlight: rgba(30, 58, 138, 0.4);
+  }
+
+  html.dark.sect-shia {
+    --highlight: rgba(133, 77, 14, 0.35);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background:
+      radial-gradient(circle at 50% 35%, var(--highlight) 0%, transparent 70%),
+      var(--bg-main);
+    background-attachment: fixed;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* Respect users who have asked the OS to reduce motion. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .prose p {
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+  }
+
+  .pattern-dots {
+    background-image: radial-gradient(var(--bg-accent) 1px, transparent 0);
+    background-size: 30px 30px;
+  }
+}

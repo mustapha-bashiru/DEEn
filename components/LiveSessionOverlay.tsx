@@ -1,8 +1,10 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 import { Sect, Madhab, LiveTranscriptItem, LiveSessionRecord } from '../types';
 import { Language, translations } from '../translations';
+import { env } from '../config/env';
+import { STORAGE_KEYS } from '../config/storage';
 
 interface LiveSessionOverlayProps {
   lang: Language;
@@ -53,7 +55,9 @@ async function decodeAudioData(
 const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, madhab, lang }) => {
   const [isActive, setIsActive] = useState(false);
   const [isModelSpeaking, setIsModelSpeaking] = useState(false);
-  const [statusText, setStatusText] = useState('');
+  // Seeded from translations rather than set inside the connect effect, which
+  // would be a setState-during-effect and an extra render on every mount.
+  const [statusText, setStatusText] = useState(() => translations[lang].liveSeeking);
   const [isRecording, setIsRecording] = useState(false);
   const [isHandRaised, setIsHandRaised] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -67,6 +71,21 @@ const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, 
   const audioChunksRef = useRef<Blob[]>([]);
   const t = translations[lang];
 
+  /*
+   * The live session connects once and its callbacks outlive the render that
+   * created them, so anything they read must come from a ref. Reading the state
+   * variables directly captured the first render's values forever: the saved
+   * transcript was always empty, and every transcript entry was written with
+   * empty text. These three refs are the live values those callbacks need.
+   */
+  const transcriptRef = useRef<LiveTranscriptItem[]>([]);
+  const currentInputRef = useRef('');
+  const currentOutputRef = useRef('');
+
+  useEffect(() => {
+    transcriptRef.current = transcript;
+  }, [transcript]);
+
   // Participants (Simulated for visualization)
   const participants = [
     { id: '1', name: 'Shaykh Al-Sanctuary', role: 'Scholar', isActive: isModelSpeaking },
@@ -75,11 +94,39 @@ const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, 
     { id: '4', name: 'Zaynab', role: 'Seeker', isActive: false },
   ];
 
+  // Declared before the effect that calls it, and dependency-free, so the
+  // `onclose` callback cannot capture a stale version.
+  const saveTranscriptToLocalStorage = useCallback(() => {
+    const items = transcriptRef.current;
+    if (items.length === 0) return;
+    const record: LiveSessionRecord = {
+      id: Date.now().toString(),
+      title: `Majlis: ${new Date().toLocaleDateString()}`,
+      timestamp: Date.now(),
+      transcript: items
+    };
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.liveRecords) || '[]');
+      localStorage.setItem(STORAGE_KEYS.liveRecords, JSON.stringify([record, ...saved]));
+    } catch (error) {
+      console.warn('SebilLink: could not save the live session transcript.', error);
+    }
+  }, []);
+
+  /*
+   * Connect exactly once per mount. `lang`, `sect` and `madhab` are deliberately
+   * snapshot at connect time — they are baked into the model's system
+   * instruction, and re-running this effect would tear down and rebuild the
+   * audio graph and the websocket mid-conversation.
+   */
   useEffect(() => {
-    setStatusText(t.liveSeeking);
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
-    const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+    const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
+    // Safari only exposes the prefixed constructor.
+    const AudioCtor: typeof AudioContext =
+      window.AudioContext ??
+      (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext!;
+    const inputAudioContext = new AudioCtor({ sampleRate: 16000 });
+    const outputAudioContext = new AudioCtor({ sampleRate: 24000 });
 
     const sessionPromise = ai.live.connect({
       model: 'gemini-2.5-flash-native-audio-preview-12-2025',
@@ -87,7 +134,7 @@ const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, 
         onopen: async () => {
           setIsActive(true);
           setStatusText(t.liveConnection);
-          
+
           await inputAudioContext.resume();
           await outputAudioContext.resume();
 
@@ -95,7 +142,7 @@ const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, 
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const source = inputAudioContext.createMediaStreamSource(stream);
             const scriptProcessor = inputAudioContext.createScriptProcessor(4096, 1, 1);
-            
+
             scriptProcessor.onaudioprocess = (e) => {
               const inputData = e.inputBuffer.getChannelData(0);
               const int16 = new Int16Array(inputData.length);
@@ -103,11 +150,11 @@ const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, 
                 int16[i] = inputData[i] * 32768;
               }
               const encodedData = encode(new Uint8Array(int16.buffer));
-              sessionPromise.then(s => s.sendRealtimeInput({ 
-                media: { data: encodedData, mimeType: 'audio/pcm;rate=16000' } 
+              sessionPromise.then(s => s.sendRealtimeInput({
+                media: { data: encodedData, mimeType: 'audio/pcm;rate=16000' }
               }));
             };
-            
+
             source.connect(scriptProcessor);
             scriptProcessor.connect(inputAudioContext.destination);
           } catch (err) {
@@ -117,7 +164,7 @@ const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, 
         },
         onmessage: async (msg: LiveServerMessage) => {
           // Handle Audio Data
-          const audioBase64 = msg.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+          const audioBase64 = msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
           if (audioBase64) {
             setIsModelSpeaking(true);
             const audioData = decode(audioBase64);
@@ -135,25 +182,41 @@ const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, 
             };
           }
 
-          // Handle Transcriptions
+          // Handle Transcriptions. Each chunk goes to a ref (read by
+          // turnComplete below) and to state (read by the render).
           if (msg.serverContent?.inputTranscription) {
-            setCurrentInputText(prev => prev + msg.serverContent!.inputTranscription!.text);
+            const chunk = msg.serverContent.inputTranscription.text ?? '';
+            currentInputRef.current += chunk;
+            setCurrentInputText(prev => prev + chunk);
           }
           if (msg.serverContent?.outputTranscription) {
-            setCurrentOutputText(prev => prev + msg.serverContent!.outputTranscription!.text);
+            const chunk = msg.serverContent.outputTranscription.text ?? '';
+            currentOutputRef.current += chunk;
+            setCurrentOutputText(prev => prev + chunk);
           }
           if (msg.serverContent?.turnComplete) {
+            const seekerText = currentInputRef.current;
+            const scholarText = currentOutputRef.current;
+            const turnedAt = Date.now();
             setTranscript(prev => [
               ...prev,
-              { id: Date.now().toString() + '-in', role: 'Seeker', text: currentInputText, timestamp: Date.now() },
-              { id: Date.now().toString() + '-out', role: 'Scholar', text: currentOutputText, timestamp: Date.now() }
+              ...(seekerText ? [{ id: `${turnedAt}-in`, role: 'Seeker' as const, text: seekerText, timestamp: turnedAt }] : []),
+              ...(scholarText ? [{ id: `${turnedAt}-out`, role: 'Scholar' as const, text: scholarText, timestamp: turnedAt }] : [])
             ]);
+            currentInputRef.current = '';
+            currentOutputRef.current = '';
             setCurrentInputText('');
             setCurrentOutputText('');
           }
 
           if (msg.serverContent?.interrupted) {
-            sourcesRef.current.forEach(s => { try { s.stop(); } catch(e){} });
+            sourcesRef.current.forEach(s => {
+              try {
+                s.stop();
+              } catch {
+                // Already stopped or ended; stop() throws on a finished node.
+              }
+            });
             sourcesRef.current.clear();
             nextStartTimeRef.current = 0;
             setIsModelSpeaking(false);
@@ -173,31 +236,24 @@ const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, 
         responseModalities: [Modality.AUDIO],
         inputAudioTranscription: {},
         outputAudioTranscription: {},
-        speechConfig: { 
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } } 
+        speechConfig: {
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } }
         },
         systemInstruction: `You are in a live Majlis (scholarly gathering). Be warm, authoritative, and concise. Perspective: ${sect}, Madhab: ${madhab}. Respond in ${lang === 'ar' ? 'Arabic' : 'English'}.`
       }
     });
 
     return () => {
+      // Persist before tearing down: `onclose` does not always fire on unmount.
+      saveTranscriptToLocalStorage();
       inputAudioContext.close();
       outputAudioContext.close();
-      sessionPromise.then(s => s.close());
+      sessionPromise.then(s => s.close()).catch(() => {
+        // Connection never opened, so there is nothing to close.
+      });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- connect once; see the comment above.
   }, []);
-
-  const saveTranscriptToLocalStorage = () => {
-    if (transcript.length === 0) return;
-    const record: LiveSessionRecord = {
-      id: Date.now().toString(),
-      title: `Majlis: ${new Date().toLocaleDateString()}`,
-      timestamp: Date.now(),
-      transcript: transcript
-    };
-    const saved = JSON.parse(localStorage.getItem('sanctuary_live_records') || '[]');
-    localStorage.setItem('sanctuary_live_records', JSON.stringify([record, ...saved]));
-  };
 
   const toggleRecording = async () => {
     if (isRecording) {
@@ -215,12 +271,17 @@ const LiveSessionOverlay: React.FC<LiveSessionOverlayProps> = ({ onClose, sect, 
         recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
         recorder.onstop = () => {
           const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          console.log("Audio recording saved locally", blob);
+          // KNOWN GAP: the consent prompt above promises offline review, but the
+          // blob is not persisted anywhere — it is discarded when this handler
+          // returns. Either store it (IndexedDB) or reword the prompt.
+          console.info('SebilLink: recording captured but not persisted.', blob.size);
+          stream.getTracks().forEach(track => track.stop());
         };
         recorder.start();
         mediaRecorderRef.current = recorder;
         setIsRecording(true);
-      } catch (err) {
+      } catch (error) {
+        console.error('SebilLink: could not start recording.', error);
         alert("Recording failed: Check permissions.");
       }
     }

@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { QuizQuestion, Sect, Madhab } from '../types';
-import { Language, translations } from '../translations';
+import { Language } from '../translations';
 import { getAIGradingFeedback } from '../services/geminiService';
 
 interface QuizOverlayProps {
@@ -23,29 +23,56 @@ const levelBadges = [
   { icon: 'fa-kaaba', label: 'Scholar of Sanctuary', color: 'text-purple-600', minLevel: 21 }
 ];
 
-const QuizOverlay: React.FC<QuizOverlayProps> = ({ questions, onComplete, lang, sect, madhab, userXP }) => {
+// `lang` stays in the props contract (App passes it) but the body never reads
+// it: this overlay's copy is hardcoded English and it does not flip to RTL.
+// Localizing it is feature work, tracked separately.
+const QuizOverlay: React.FC<QuizOverlayProps> = ({ questions, onComplete, sect, madhab, userXP }) => {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [showResult, setShowResult] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_SECONDS);
 
-  const t = translations[lang];
   const current = questions[currentIdx];
+
+  /*
+   * The countdown used to call handleSelect from inside the setTimeLeft updater.
+   * Updaters must be pure — React may run them more than once (it does under
+   * StrictMode), which double-submitted the timed-out answer. The interval now
+   * advances the quiz from its own callback, reading the live handler through a
+   * ref so it is never a stale closure.
+   */
+  const timeLeftRef = useRef(QUESTION_TIME_SECONDS);
+  const handleSelectRef = useRef<(option: string) => void>(() => {});
 
   useEffect(() => {
     if (showResult) return;
+    timeLeftRef.current = QUESTION_TIME_SECONDS;
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          handleSelect("TIMEOUT");
-          return QUESTION_TIME_SECONDS;
-        }
-        return prev - 1;
-      });
+      if (timeLeftRef.current <= 1) {
+        timeLeftRef.current = QUESTION_TIME_SECONDS;
+        setTimeLeft(QUESTION_TIME_SECONDS);
+        handleSelectRef.current('TIMEOUT');
+      } else {
+        timeLeftRef.current -= 1;
+        setTimeLeft(timeLeftRef.current);
+      }
     }, 1000);
     return () => clearInterval(timer);
   }, [currentIdx, showResult]);
+
+  const finishQuiz = async (finalAnswers: string[]) => {
+    setShowResult(true);
+    let score = 0;
+    questions.forEach((q, i) => { if (q.correctAnswer === finalAnswers[i]) score++; });
+    try {
+      const fb = await getAIGradingFeedback(score, questions.length, finalAnswers, questions.map(q => q.correctAnswer), sect, madhab);
+      setFeedback(fb);
+    } catch (error) {
+      console.warn('SebilLink: grading feedback unavailable.', error);
+      setFeedback("May Allah increase your knowledge.");
+    }
+  };
 
   const handleSelect = (option: string) => {
     const newAnswers = [...answers, option];
@@ -58,21 +85,18 @@ const QuizOverlay: React.FC<QuizOverlayProps> = ({ questions, onComplete, lang, 
     }
   };
 
-  const finishQuiz = async (finalAnswers: string[]) => {
-    setShowResult(true);
-    let score = 0;
-    questions.forEach((q, i) => { if (q.correctAnswer === finalAnswers[i]) score++; });
-    try {
-      const fb = await getAIGradingFeedback(score, questions.length, finalAnswers, questions.map(q => q.correctAnswer), sect, madhab);
-      setFeedback(fb);
-    } catch (e) { setFeedback("May Allah increase your knowledge."); }
-  };
+  // Kept current on every render so the interval above always calls the version
+  // that closes over the latest answers and question index.
+  useEffect(() => {
+    handleSelectRef.current = handleSelect;
+  });
 
   const score = answers.reduce((acc, ans, i) => acc + (ans === questions[i].correctAnswer ? 1 : 0), 0);
   const currentLevel = Math.floor(userXP / XP_PER_LEVEL) + 1;
   const earnedBadge = levelBadges.slice().reverse().find(b => currentLevel >= b.minLevel) || levelBadges[0];
 
-  const questionText = current?.text || (current as any)?.question || "Knowledge challenge loading...";
+  // Some model responses name the field `question` instead of `text`.
+  const questionText = current?.text || (current as QuizQuestion & { question?: string })?.question || "Knowledge challenge loading...";
 
   return (
     <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-stone-950/90 backdrop-blur-xl animate-fade-in">

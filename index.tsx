@@ -1,7 +1,16 @@
-
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import PwaUpdatePrompt from './components/PwaUpdatePrompt';
+import { reportEnvIssues, validateEnv } from './config/env';
+import { migrateLegacyStorageKeys } from './config/storage';
+import './index.css';
+
+// Both run before mount: configuration problems should surface as one clear
+// message at startup rather than as a confusing failure inside a feature, and the
+// app must read migrated storage keys on its very first render.
+reportEnvIssues(validateEnv());
+migrateLegacyStorageKeys();
 
 const container = document.getElementById('root');
 
@@ -13,17 +22,6 @@ const root = createRoot(container);
 root.render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>
+    <PwaUpdatePrompt />
+  </React.StrictMode>,
 );
-
-// Register Service Worker for Offline Mode
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    // Using relative path without leading slash to ensure correct origin matching in frames
-    navigator.serviceWorker.register('./sw.js').then(registration => {
-      console.log('Sanctuary SW registered: ', registration.scope);
-    }).catch(error => {
-      console.log('Sanctuary SW registration failed: ', error);
-    });
-  });
-}

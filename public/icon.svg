@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+  
+  
+    <defs>
+      <!--
+        A crescent is a subtraction, not a symmetric difference, so fill-rule
+        cannot express it: the cutting circle extends past the outer circle's
+        edge, and evenodd would fill that overhang back in as a ring.
+      -->
+      <mask id="crescent" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+        <rect x="0" y="0" width="100" height="100" fill="black"/>
+        <circle cx="66" cy="26" r="14" fill="white"/>
+        <circle cx="73.5" cy="18.5" r="12.3" fill="black"/>
+      </mask>
+    </defs>
+    <g transform="translate(0.00 0.00) scale(1)">
+      <path d="M 30 92 C 40 70 64 70 54 46" stroke="#3b82f6" stroke-width="14" stroke-linecap="round" fill="none"/>
+      <path d="M 30 92 C 40 70 64 70 54 46" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"
+            stroke-dasharray="4 8" opacity="0.75" fill="none"/>
+      <circle cx="66" cy="26" r="14"
+              fill="#3b82f6" mask="url(#crescent)"/>
+      <path fill="#3b82f6" d="M 81.00 5.00 L 82.53 8.90 L 86.71 9.15 L 83.47 11.80 L 84.53 15.85 L 81.00 13.60 L 77.47 15.85 L 78.53 11.80 L 75.29 9.15 L 79.47 8.90 Z"/>
+    </g>
+</svg>

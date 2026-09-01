@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Message, ChatSession, Sect, Madhab, User, Attachment, UserProgress, QuizQuestion, ArticleLead, SacredArt } from './types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Message, ChatSession, Sect, Madhab, User, Attachment, UserProgress, QuizQuestion, ArticleLead, SacredArt, AppView } from './types';
 import { queryAdDeen, generateLessonQuiz, detectLocationName } from './services/geminiService';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
@@ -15,8 +15,29 @@ import SpiritualBriefingOverlay from './components/SpiritualBriefingOverlay';
 import ArticlePreviewOverlay from './components/ArticlePreviewOverlay';
 import ProfileOverlay from './components/ProfileOverlay';
 import { Language, translations } from './translations';
+import { STORAGE_KEYS, readJson, writeJson } from './config/storage';
+import { isAiConfigured } from './config/env';
 
 const generateId = () => Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+
+/**
+ * The stored user shape, read once at startup by several state initializers.
+ * Only the fields those initializers need are relied on; the rest is whatever an
+ * earlier build wrote.
+ */
+type StoredUser = Partial<User> & { preferredSect?: Sect; preferredMadhab?: Madhab };
+
+const readStoredUser = (): StoredUser | null => readJson<StoredUser | null>(STORAGE_KEYS.user, null);
+
+const makeSession = (userId: string, sect: Sect, madhab: Madhab): ChatSession => ({
+  id: generateId(),
+  userId,
+  title: 'New Inquiry',
+  messages: [],
+  createdAt: Date.now(),
+  sect,
+  madhab,
+});
 
 /**
  * SebilLogo: "The Path to Enlightenment"
@@ -63,66 +84,66 @@ const SebilLogo = ({ className = "w-6 h-6", color = "currentColor" }) => (
 );
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const saved = localStorage.getItem('sanctuary_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) { return null; }
-  });
+  const [user, setUser] = useState<User | null>(() => readJson<User | null>(STORAGE_KEYS.user, null));
 
+  /*
+   * Seeded with a session rather than an empty array. The old code started empty
+   * and created the first session from an effect, which meant an extra render
+   * pass on every cold start and a setState-inside-effect cascade. Deriving it
+   * here means the app is never in a "no session" state.
+   */
   const [sessions, setSessions] = useState<ChatSession[]>(() => {
-    try {
-      const saved = localStorage.getItem('sanctuary_sessions');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) { return []; }
+    const stored = readJson<ChatSession[]>(STORAGE_KEYS.sessions, []);
+    if (Array.isArray(stored) && stored.length > 0) return stored;
+    const storedUser = readStoredUser();
+    return [
+      makeSession(
+        storedUser?.id ?? 'guest',
+        storedUser?.preferredSect ?? 'Sunni',
+        storedUser?.preferredMadhab ?? 'General',
+      ),
+    ];
   });
 
-  const [sacredArtsHistory, setSacredArtsHistory] = useState<SacredArt[]>(() => {
-    try {
-      const saved = localStorage.getItem('sanctuary_arts');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) { return []; }
-  });
+  const [sacredArtsHistory, setSacredArtsHistory] = useState<SacredArt[]>(() =>
+    readJson<SacredArt[]>(STORAGE_KEYS.arts, []),
+  );
 
+  // Depends on `sessions` above: state initializers run in declaration order on
+  // the first render, so `sessions` is already populated here. A stored id that
+  // no longer matches a session is discarded rather than left dangling.
   const [activeSessionId, setActiveSessionId] = useState<string | null>(() => {
-    return localStorage.getItem('sanctuary_active_session_id');
+    const stored = localStorage.getItem(STORAGE_KEYS.activeSessionId);
+    if (stored && sessions.some((s) => s.id === stored)) return stored;
+    return sessions[0]?.id ?? null;
   });
 
-  const [currentSect, setCurrentSect] = useState<Sect>(() => {
-    const saved = localStorage.getItem('sanctuary_user');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.preferredSect) return parsed.preferredSect;
-      } catch(e){}
-    }
-    return 'Sunni';
-  });
+  const [currentSect, setCurrentSect] = useState<Sect>(
+    () => readStoredUser()?.preferredSect ?? 'Sunni',
+  );
 
-  const [currentMadhab, setCurrentMadhab] = useState<Madhab>(() => {
-    const saved = localStorage.getItem('sanctuary_user');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.preferredMadhab) return parsed.preferredMadhab;
-      } catch(e){}
-    }
-    return 'General';
-  });
+  const [currentMadhab, setCurrentMadhab] = useState<Madhab>(
+    () => readStoredUser()?.preferredMadhab ?? 'General',
+  );
 
   const [lang, setLang] = useState<Language>(() => {
-    return (localStorage.getItem('sanctuary_lang') as Language) || 'en';
+    return (localStorage.getItem(STORAGE_KEYS.lang) as Language) || 'en';
   });
   
-  const [locationName, setLocationName] = useState<string | null>(null);
+  // Seeded from capability detection so refreshLocation never has to report the
+  // "geolocation missing entirely" case with a synchronous setState.
+  const [locationName, setLocationName] = useState<string | null>(() =>
+    'geolocation' in navigator ? null : 'Geo access blocked',
+  );
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>(() => {
-    return (localStorage.getItem('sanctuary_theme') as any) || 'system';
+    const stored = localStorage.getItem(STORAGE_KEYS.theme);
+    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
   });
 
   const [isTyping, setIsTyping] = useState(false);
   const [typingText, setTypingText] = useState("Loading...");
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<'chat' | 'bookmarks' | 'quran' | 'arts' | 'live'>('chat');
+  const [view, setView] = useState<AppView>('chat');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showBriefing, setShowBriefing] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
@@ -130,40 +151,53 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeQuiz, setActiveQuiz] = useState<QuizQuestion[] | null>(null);
   const [activeArticlePreview, setActiveArticlePreview] = useState<ArticleLead | null>(null);
-  const initialSessionCreated = useRef(false);
 
-  const [userProgress, setUserProgress] = useState<UserProgress>(() => {
-    try {
-      const saved = localStorage.getItem('sanctuary_progress');
-      return saved ? JSON.parse(saved) : { 
-        xp: 0, level: 1, streak: 0, lastLessonDate: null, lastQuizDate: null, completedQuizzes: [], badges: [] 
-      };
-    } catch(e) {
-      return { xp: 0, level: 1, streak: 0, lastLessonDate: null, lastQuizDate: null, completedQuizzes: [], badges: [] };
-    }
-  });
+  const DEFAULT_PROGRESS: UserProgress = {
+    xp: 0, level: 1, streak: 0, lastLessonDate: null, lastQuizDate: null, completedQuizzes: [], badges: []
+  };
+  const [userProgress, setUserProgress] = useState<UserProgress>(() =>
+    readJson<UserProgress>(STORAGE_KEYS.progress, DEFAULT_PROGRESS),
+  );
 
   const t = translations[lang];
+
+  // Read once per render: the value is a build-time constant, not reactive state.
+  const aiConfigured = isAiConfigured();
 
   const handleSectChange = useCallback((sect: Sect) => {
     setCurrentSect(sect);
     if (user) {
       const updatedUser = { ...user, preferredSect: sect };
       setUser(updatedUser);
-      localStorage.setItem('sanctuary_user', JSON.stringify(updatedUser));
+      localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(updatedUser));
     }
   }, [user]);
 
   useEffect(() => {
-    localStorage.setItem('sanctuary_lang', lang);
+    localStorage.setItem(STORAGE_KEYS.lang, lang);
   }, [lang]);
 
+  // These three were read on startup but never written, so chats, generated art,
+  // and the selected session were silently lost on every reload.
   useEffect(() => {
-    localStorage.setItem('sanctuary_progress', JSON.stringify(userProgress));
+    writeJson(STORAGE_KEYS.sessions, sessions);
+  }, [sessions]);
+
+  useEffect(() => {
+    writeJson(STORAGE_KEYS.arts, sacredArtsHistory);
+  }, [sacredArtsHistory]);
+
+  useEffect(() => {
+    if (activeSessionId) localStorage.setItem(STORAGE_KEYS.activeSessionId, activeSessionId);
+    else localStorage.removeItem(STORAGE_KEYS.activeSessionId);
+  }, [activeSessionId]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.progress, JSON.stringify(userProgress));
   }, [userProgress]);
 
   useEffect(() => {
-    localStorage.setItem('sanctuary_theme', themeMode);
+    localStorage.setItem(STORAGE_KEYS.theme, themeMode);
     const root = window.document.documentElement;
     if (themeMode === 'dark' || (themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       root.classList.add('dark');
@@ -177,15 +211,25 @@ const App: React.FC = () => {
     else document.documentElement.classList.remove('sect-shia');
   }, [currentSect]);
 
-  const refreshLocation = useCallback(async () => {
-    try {
-      navigator.geolocation.getCurrentPosition(async (pos) => {
+  /*
+   * Every state write below happens in one of getCurrentPosition's callbacks, so
+   * the effect that calls this never sets state synchronously. The "no API at
+   * all" case is folded into locationName's initial value instead.
+   */
+  const refreshLocation = useCallback(() => {
+    if (!('geolocation' in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
         const name = await detectLocationName(pos.coords.latitude, pos.coords.longitude);
         setLocationName(name);
-      }, (err) => {
+      },
+      (error) => {
+        // Covers permission denied, position unavailable, and timeout.
+        console.warn('SebilLink: could not resolve location.', error.message);
         setLocationName("Geo access blocked");
-      });
-    } catch (e) {}
+      },
+      { timeout: 10_000 },
+    );
   }, []);
 
   useEffect(() => {
@@ -193,21 +237,11 @@ const App: React.FC = () => {
   }, [refreshLocation]);
 
   const createNewSession = useCallback((sect: Sect = currentSect, madhab: Madhab = currentMadhab) => {
-    const newSession: ChatSession = { 
-      id: generateId(), userId: user?.id || 'guest', title: 'New Inquiry', messages: [], createdAt: Date.now(), sect, madhab 
-    };
+    const newSession = makeSession(user?.id || 'guest', sect, madhab);
     setSessions(prev => [newSession, ...prev]);
     setActiveSessionId(newSession.id);
     return newSession;
   }, [currentSect, currentMadhab, user?.id]);
-
-  useEffect(() => { 
-    if (!initialSessionCreated.current) { 
-      if (sessions.length === 0) createNewSession(); 
-      else if (!activeSessionId) setActiveSessionId(sessions[0].id);
-      initialSessionCreated.current = true; 
-    }
-  }, [createNewSession, sessions, activeSessionId]);
 
   const handleSendMessage = async (content: string, attachments?: Attachment[]) => {
     setError(null);
@@ -219,7 +253,7 @@ const App: React.FC = () => {
     const todayStr = new Date().toDateString();
 
     if (isLegacyRequest) {
-      const cachedLegacy = localStorage.getItem('sabil_daily_legacy');
+      const cachedLegacy = localStorage.getItem(STORAGE_KEYS.dailyLegacy);
       if (cachedLegacy) {
         const { date, lesson, quiz } = JSON.parse(cachedLegacy);
         if (date === todayStr) {
@@ -243,7 +277,7 @@ const App: React.FC = () => {
     const targetId = activeSession.id;
     
     const history = activeSession.messages.map(m => ({
-      role: (m.role === 'user' ? 'user' : 'model') as any,
+      role: (m.role === 'user' ? 'user' : 'model') as 'user' | 'model',
       parts: [{ text: m.content || "" }]
     }));
 
@@ -264,7 +298,7 @@ const App: React.FC = () => {
         setTypingText("Preparing knowledge check...");
         const quiz = await generateLessonQuiz(res.text, activeSession.sect, activeSession.madhab);
         
-        localStorage.setItem('sabil_daily_legacy', JSON.stringify({
+        localStorage.setItem(STORAGE_KEYS.dailyLegacy, JSON.stringify({
           date: todayStr,
           lesson: res.text,
           quiz: quiz
@@ -274,12 +308,15 @@ const App: React.FC = () => {
           setActiveQuiz(quiz);
         }
       }
-    } catch (err: any) { 
+    } catch (err) {
+      console.error('SebilLink: inquiry failed.', err);
       setError("The scholarly servers are currently busy. Please try again soon.");
     } finally { setIsTyping(false); }
   };
 
-  const handleQuizComplete = (score: number, total: number) => {
+  // `_total` is part of QuizOverlay's callback contract; XP is awarded per correct
+  // answer, so the question count is not needed here.
+  const handleQuizComplete = (score: number, _total: number) => {
     const todayStr = new Date().toDateString();
     setUserProgress(prev => ({
       ...prev,
@@ -348,6 +385,18 @@ const App: React.FC = () => {
              </div>
           </div>
         </header>
+
+        {!aiConfigured && (
+          <div
+            role="alert"
+            className="mx-8 mt-4 flex items-center gap-3 px-5 py-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl"
+          >
+            <i className="fas fa-triangle-exclamation text-amber-500" aria-hidden="true" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">
+              GEMINI_API_KEY is not set — AI features are unavailable. Add it to .env.local.
+            </p>
+          </div>
+        )}
 
         <div className="flex-1 overflow-hidden">
           {view === 'chat' && (

@@ -1,0 +1,25 @@
+# Prettier 3 already skips unsupported extensions when expanding a directory, but
+# it happily reformats anything it *does* recognise — including minified build
+# output and generated files. That is what this list is for.
+
+# Build and tool output
+dist/
+dev-dist/
+coverage/
+playwright-report/
+test-results/
+node_modules/
+
+# Generated. Regenerate with `npm run db:types`; hand-formatting it would make
+# `npm run db:types:check` report drift on every run.
+types/database.ts
+
+# Managed by npm.
+package-lock.json
+
+# Belt and braces: there is no SQL parser installed, and reformatting migrations
+# that have already been applied would produce a diff with no semantic content.
+*.sql
+
+# Untracked planning notes.
+.kilo/

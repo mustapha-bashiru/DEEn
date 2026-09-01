@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Sect, Madhab } from '../types';
-import { Language, translations } from '../translations';
+import { Language } from '../translations';
 
 interface ProfileOverlayProps {
   user: User;
@@ -18,7 +18,8 @@ const ProfileOverlay: React.FC<ProfileOverlayProps> = ({ user, onUpdate, onClose
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const t = translations[lang];
+  // NOTE: this overlay's copy is still hardcoded English — it never consumed
+  // `translations`. Localizing it is feature work, tracked separately.
   const madhabOptions: Madhab[] = ['General', 'Hanafi', 'Maliki', 'Shafi\'i', 'Hanbali', 'Usuli', 'Akhbari'];
 
   const handleSave = () => {

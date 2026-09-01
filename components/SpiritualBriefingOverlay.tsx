@@ -2,13 +2,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Language, translations } from '../translations';
 import { fetchSpiritualBriefingData, BriefingData } from '../services/geminiService';
+import { AppView } from '../types';
 
 interface SpiritualBriefingOverlayProps {
   lang: Language;
   setLang: (l: Language) => void;
   locationName: string | null;
   onClose: () => void;
-  onNavigate: (view: any) => void;
+  onNavigate: (view: AppView) => void;
 }
 
 const toArabicNumerals = (str: string | number): string => {

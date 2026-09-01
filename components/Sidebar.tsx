@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { User, UserProgress, Sect } from '../types';
+import { User, UserProgress, Sect, AppView } from '../types';
 import { Language, translations } from '../translations';
 
 interface SidebarProps {
@@ -16,7 +16,7 @@ interface SidebarProps {
   onOpenMap: (query: string) => void;
   currentSect: Sect;
   currentView: string;
-  onNavigate: (view: 'chat' | 'bookmarks' | 'quran' | 'arts' | 'live') => void;
+  onNavigate: (view: AppView) => void;
   onNewInquiry: () => void;
   onUtilityAction: (action: string) => void;
   themeMode: 'system' | 'light' | 'dark';
@@ -59,57 +59,80 @@ const SebilLogo = ({ className = "w-6 h-6", color = "currentColor" }) => (
   </svg>
 );
 
-const Sidebar: React.FC<SidebarProps> = ({ 
+/*
+ * NavItem and UtilityItem live at module scope, not inside Sidebar. Declaring a
+ * component inside another component's body creates a brand-new component type
+ * on every render, so React unmounts and remounts the whole subtree and any
+ * state inside it is lost. Neither of these closes over Sidebar's scope, so
+ * hoisting them is a straight move.
+ */
+interface NavItemProps {
+  icon: string;
+  label: string;
+  onClick: () => void;
+  active: boolean;
+  isCore?: boolean;
+}
+
+const NavItem: React.FC<NavItemProps> = ({ icon, label, onClick, active, isCore }) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center space-x-4 space-x-reverse px-5 py-4 rounded-2xl transition-all group relative overflow-hidden ${
+      active
+        ? 'bg-white/5 border border-scholar-gold/20'
+        : 'hover:bg-white/5'
+    } ${isCore ? 'hover:shadow-[0_0_20px_rgba(var(--primary-color-rgb),0.05)]' : ''}`}
+  >
+    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+      active
+        ? 'bg-scholar-gold text-white shadow-lg'
+        : 'bg-black/5 dark:bg-[#1F1F1F] text-scholar-muted group-hover:text-neutral-900 dark:group-hover:text-white'
+    } ${isCore && !active ? 'border border-scholar-gold/30 group-hover:bg-scholar-gold/5' : ''}`}>
+      <i className={`fas ${icon} text-sm ${isCore && !active ? 'text-scholar-gold animate-pulse' : ''}`}></i>
+    </div>
+    <span className={`text-[11px] font-black uppercase tracking-widest ${
+      active
+        ? 'text-neutral-900 dark:text-white'
+        : 'text-scholar-muted group-hover:text-neutral-900 dark:group-hover:text-white'
+    }`}>{label}</span>
+
+    {isCore && !active && (
+      <div className="absolute right-4 w-1.5 h-1.5 bg-scholar-gold rounded-full animate-ping"></div>
+    )}
+
+    {active && (
+      <div className="mr-auto ml-0 w-1.5 h-1.5 bg-scholar-gold rounded-full shadow-[0_0_8px_var(--primary-color)]"></div>
+    )}
+  </button>
+);
+
+interface UtilityItemProps {
+  icon: string;
+  label: string;
+  onClick: () => void;
+  badge?: string;
+  isCore?: boolean;
+}
+
+const UtilityItem: React.FC<UtilityItemProps> = ({ icon, label, onClick, badge, isCore }) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:bg-white/5 group ${isCore ? 'hover:shadow-[0_0_10px_rgba(var(--primary-color-rgb),0.03)]' : ''}`}
+  >
+    <div className="flex items-center space-x-4 space-x-reverse">
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-black/5 dark:bg-[#1F1F1F] ${isCore ? 'text-scholar-gold bg-scholar-gold/5' : 'text-scholar-muted'} group-hover:text-scholar-gold group-hover:bg-scholar-gold/10`}>
+        <i className={`fas ${icon} text-[10px] ${isCore ? 'animate-bounce' : ''}`}></i>
+      </div>
+      <span className="text-[10px] font-black text-scholar-muted uppercase tracking-[0.2em] group-hover:text-neutral-900 dark:group-hover:text-white transition-colors">{label}</span>
+    </div>
+    {badge && <span className="bg-scholar-gold text-white text-[9px] font-black px-2 py-0.5 rounded-sm">{badge}</span>}
+  </button>
+);
+
+const Sidebar: React.FC<SidebarProps> = ({
   isOpen, onClose, lang, user, progress, onLogout, onOpenAuth, onOpenNews, onOpenLive, onOpenMap, currentView, onNavigate, onNewInquiry, onUtilityAction, themeMode, onThemeChange, onLegacyLesson, locationName, onRefreshLocation
 }) => {
   const t = translations[lang];
-
-  const NavItem = ({ icon, label, onClick, active, isCore }: any) => (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center space-x-4 space-x-reverse px-5 py-4 rounded-2xl transition-all group relative overflow-hidden ${
-        active 
-          ? 'bg-white/5 border border-scholar-gold/20' 
-          : 'hover:bg-white/5'
-      } ${isCore ? 'hover:shadow-[0_0_20px_rgba(var(--primary-color-rgb),0.05)]' : ''}`}
-    >
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-        active 
-          ? 'bg-scholar-gold text-white shadow-lg' 
-          : 'bg-black/5 dark:bg-[#1F1F1F] text-scholar-muted group-hover:text-neutral-900 dark:group-hover:text-white'
-      } ${isCore && !active ? 'border border-scholar-gold/30 group-hover:bg-scholar-gold/5' : ''}`}>
-        <i className={`fas ${icon} text-sm ${isCore && !active ? 'text-scholar-gold animate-pulse' : ''}`}></i>
-      </div>
-      <span className={`text-[11px] font-black uppercase tracking-widest ${
-        active 
-          ? 'text-neutral-900 dark:text-white' 
-          : 'text-scholar-muted group-hover:text-neutral-900 dark:group-hover:text-white'
-      }`}>{label}</span>
-      
-      {isCore && !active && (
-        <div className="absolute right-4 w-1.5 h-1.5 bg-scholar-gold rounded-full animate-ping"></div>
-      )}
-      
-      {active && (
-        <div className="mr-auto ml-0 w-1.5 h-1.5 bg-scholar-gold rounded-full shadow-[0_0_8px_var(--primary-color)]"></div>
-      )}
-    </button>
-  );
-
-  const UtilityItem = ({ icon, label, onClick, badge, isCore }: any) => (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:bg-white/5 group ${isCore ? 'hover:shadow-[0_0_10px_rgba(var(--primary-color-rgb),0.03)]' : ''}`}
-    >
-      <div className="flex items-center space-x-4 space-x-reverse">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-black/5 dark:bg-[#1F1F1F] ${isCore ? 'text-scholar-gold bg-scholar-gold/5' : 'text-scholar-muted'} group-hover:text-scholar-gold group-hover:bg-scholar-gold/10`}>
-          <i className={`fas ${icon} text-[10px] ${isCore ? 'animate-bounce' : ''}`}></i>
-        </div>
-        <span className="text-[10px] font-black text-scholar-muted uppercase tracking-[0.2em] group-hover:text-neutral-900 dark:group-hover:text-white transition-colors">{label}</span>
-      </div>
-      {badge && <span className="bg-scholar-gold text-white text-[9px] font-black px-2 py-0.5 rounded-sm">{badge}</span>}
-    </button>
-  );
 
   return (
     <>

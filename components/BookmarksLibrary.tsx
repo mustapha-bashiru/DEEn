@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChatSession, Message } from '../types';
+import { ChatSession } from '../types';
 import { Language, translations } from '../translations';
 
 interface BookmarksLibraryProps {

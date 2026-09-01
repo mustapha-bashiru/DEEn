@@ -4,6 +4,7 @@ import { ArticleLead } from '../types';
 import { Language, translations } from '../translations';
 import { GoogleGenAI } from '@google/genai';
 import { MODEL_NAME } from '../constants';
+import { env } from '../config/env';
 
 interface ArticlePreviewOverlayProps {
   article: ArticleLead;
@@ -20,7 +21,7 @@ const ArticlePreviewOverlay: React.FC<ArticlePreviewOverlayProps> = ({ article, 
   useEffect(() => {
     const fetchPreview = async () => {
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
         const response = await ai.models.generateContent({
           model: MODEL_NAME,
           contents: `Provide a short, 3-paragraph executive summary for an Islamic scholarly article titled "${article.title}" based on this context: "${article.context}". Focus on key arguments and scholarly significance.`,

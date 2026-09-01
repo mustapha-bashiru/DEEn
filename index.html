@@ -1,104 +1,22 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ask the Scholars – Executive Matte</title>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react-dom": "https://esm.sh/react-dom@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
-    "@google/genai": "https://esm.sh/@google/genai",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/"
-  }
-}
-</script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            neutral: { 
-              dark: '#121212',
-              card: '#1F1F1F',
-              inner: '#262626',
-              border: 'rgba(255,255,255,0.06)'
-            },
-            scholar: { 
-              gold: 'var(--primary-color)',
-              accent: 'var(--accent-color)',
-              green: '#10B981',
-              white: '#FFFFFF',
-              muted: '#737373',
-              navy: '#1e3a8a'
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            arabic: ['Noto Sans Arabic', 'Amiri', 'serif']
-          }
-        }
-      }
-    }
-  </script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
-  <script>
-    window.process = { env: { NODE_ENV: 'production' } };
-  </script>
-  <style>
-    :root {
-      --bg-main: #f8fafc;
-      --bg-accent: rgba(30, 58, 138, 0.02);
-      --primary-color: #3b82f6;
-      --accent-color: #1e40af;
-      --highlight: rgba(59, 130, 246, 0.15);
-    }
-    
-    html.sect-shia {
-      --primary-color: #ca8a04;
-      --accent-color: #854d0e;
-      --highlight: rgba(202, 138, 4, 0.15);
-    }
-
-    html.dark {
-      --bg-main: #121212;
-      --bg-accent: rgba(255, 255, 255, 0.02);
-      --highlight: rgba(30, 58, 138, 0.4);
-    }
-    
-    html.dark.sect-shia {
-      --highlight: rgba(133, 77, 14, 0.35);
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: radial-gradient(circle at 50% 35%, var(--highlight) 0%, transparent 70%), var(--bg-main) !important;
-      background-attachment: fixed !important;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-
-    .prose p {
-      margin-bottom: 1.5rem !important;
-      line-height: 1.6 !important; 
-    }
-
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; }
-    .pattern-dots { background-image: radial-gradient(var(--bg-accent) 1px, transparent 0); background-size: 30px 30px; }
-  </style>
-</head>
-<body class="pattern-dots">
-  <div id="root"></div>
-  <script type="module" src="index.tsx"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SebilLink – Mosque &amp; Community Super App</title>
+    <meta
+      name="description"
+      content="SebilLink connects mosques, halal businesses, and their communities: an Islamic AI assistant, QR menus, prayer times, and community events in one app."
+    />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="SebilLink" />
+  </head>
+  <body class="pattern-dots">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>

@@ -1,0 +1,94 @@
+# Local Supabase stack. Committed so that `supabase start` produces the same
+# database for everyone and for CI.
+#
+# Ports are the CLI defaults and are left alone deliberately: every Supabase doc,
+# error message, and support answer assumes them, and the app never hardcodes a
+# port anyway — it reads VITE_SUPABASE_URL.
+
+project_id = "sebillink"
+
+[api]
+enabled = true
+port = 54321
+# `app` is absent from this list on purpose. It holds the security-definer role
+# helpers, and exposing it would make them callable as RPC from any browser
+# holding the anon key. Only `public` is API surface.
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+# A client asking for everything gets 1000 rows, not the whole table. Chat message
+# history is the realistic way to hit this; the API paginates.
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.pooler]
+# Not needed for local development. Vercel functions in production do need
+# pooling, but that is the hosted project's transaction-mode pooler, configured
+# there rather than here.
+enabled = false
+
+[realtime]
+# Step 9 pushes live order status over this. Enabled now so the local stack
+# matches production rather than diverging in one dimension.
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+# Catches every outbound mail locally, which is what makes
+# `enable_confirmations = true` below workable in development: signup
+# confirmations and password resets land at http://localhost:54324 instead of
+# needing a real inbox.
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+# Ceiling for the whole stack. Per-bucket limits in the storage migration are
+# tighter and are what actually governs an upload.
+file_size_limit = "100MiB"
+
+[auth]
+enabled = true
+# Matches the Vite dev server in vite.config.ts. OAuth and email links redirect
+# here, so a mismatch shows up as a successful login that lands on a blank page.
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+# The plan has no anonymous-session feature; guest AI access is metered by an
+# opaque session key in ai_usage, not by an anonymous auth user.
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+# The plan requires verified email/password. Left on in local development too, so
+# nobody builds a flow that only works against unverified accounts.
+enable_confirmations = true
+# An email change must be confirmed at both the old and new address, so losing
+# control of a session does not let an attacker silently move the account.
+double_confirm_changes = true
+
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+# Step 3 requires MFA for privileged roles (moderator, admin). Enabled here so
+# enrolment can be built and tested locally.
+enroll_enabled = true
+verify_enabled = true
+
+[auth.external.google]
+# Off until real credentials exist. Step 3 wires the callback; flipping this on
+# requires the two variables below in the environment, never in this file.
+enabled = false
+client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
+redirect_uri = ""

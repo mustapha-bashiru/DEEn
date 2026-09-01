@@ -128,3 +128,16 @@ export interface QuranVerse {
   modernApplication: string;
   audioUri: string;
 }
+
+/** The top-level surfaces App can switch between. */
+export type AppView = 'chat' | 'bookmarks' | 'quran' | 'arts' | 'live';
+
+/**
+ * The AI Studio host bridge. Present only when the app runs inside Google AI
+ * Studio, which is where users pick a key with Veo quota; `window.aistudio` is
+ * undefined everywhere else, so every call site must guard on it.
+ */
+export interface AiStudioBridge {
+  hasSelectedApiKey?: () => Promise<boolean>;
+  openSelectKey?: () => Promise<void>;
+}

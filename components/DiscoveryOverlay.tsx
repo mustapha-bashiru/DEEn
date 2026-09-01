@@ -9,7 +9,14 @@ interface DiscoveryOverlayProps {
   onNavigate: (view: 'chat' | 'bookmarks' | 'quran' | 'arts', initialPrompt?: string) => void;
 }
 
-const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, isPremium, onOpenAuth, onNavigate, lang }) => {
+/*
+ * NOTE: nothing in the app currently renders DiscoveryOverlay — it is not
+ * imported by App.tsx or any other component. It is kept because plan step 6
+ * builds public discovery, and this is the closest existing surface.
+ * `isPremium` and `onOpenAuth` stay in the props contract but are unread: the
+ * overlay never gates anything behind a paywall or a sign-in.
+ */
+const DiscoveryOverlay: React.FC<DiscoveryOverlayProps> = ({ onClose, onNavigate, lang }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const t = translations[lang];
 

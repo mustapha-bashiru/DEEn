@@ -12,6 +12,29 @@ dist
 dist-ssr
 *.local
 
+# Build output of vite-plugin-pwa in dev mode
+dev-dist
+
+# Environment: every variant is ignored except the committed template.
+.env
+.env.*
+!.env.example
+
+# Test output
+coverage
+playwright-report
+playwright/.cache
+test-results
+
+# Supabase CLI local state. `migrations/`, `tests/`, `seed.sql`, and `config.toml`
+# are all committed — these are the per-machine scratch directories the CLI writes
+# when a local stack is running.
+supabase/.temp/
+supabase/.branches/
+
+# Vercel CLI local state (`vercel dev`, `vercel link`).
+.vercel
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

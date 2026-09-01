@@ -1,6 +1,8 @@
-import { GoogleGenAI, Modality, Type } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { getSystemInstruction, MODEL_NAME } from "../constants";
-import { Sect, Madhab, QuranVerse, Attachment, VisualMetadata, ResourceLink, ArticleLead, QuizQuestion, GroundingLink } from "../types";
+import { env } from "../config/env";
+import { STORAGE_KEYS } from "../config/storage";
+import { Sect, Madhab, QuranVerse, Attachment, QuizQuestion, GroundingLink } from "../types";
 
 /**
  * Exponential Backoff Utility for Scholarly Resilience
@@ -48,7 +50,7 @@ export interface BriefingData {
   };
 }
 
-const BRIEFING_CACHE_KEY = 'sanctuary_briefing_cache';
+const BRIEFING_CACHE_KEY = STORAGE_KEYS.briefingCachePrefix;
 
 export const fetchSpiritualBriefingData = async (location: string | null, lang: string): Promise<BriefingData> => {
   const now = Date.now();
@@ -62,10 +64,13 @@ export const fetchSpiritualBriefingData = async (location: string | null, lang: 
         return data;
       }
     }
-  } catch (e) {}
+  } catch {
+    // A corrupt or unparseable cache entry is not worth surfacing: fall through
+    // and fetch a fresh briefing, which overwrites it.
+  }
 
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
     const prompt = `Provide a spiritual briefing for today in ${location || 'a general global context'}. 
       1. Calculate approximate prayer times for this location today.
       2. Identify the current Hijri date.
@@ -112,7 +117,10 @@ export const fetchSpiritualBriefingData = async (location: string | null, lang: 
     const data = JSON.parse(response.text || "{}");
     localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
     return data;
-  }).catch(error => {
+  }).catch(() => {
+    // Offline or quota-exhausted: the briefing is decorative enough that a
+    // static fallback beats an error state. Times are placeholders, not
+    // calculated — plan step 10 replaces them with mosque-provided schedules.
     return {
       prayerTimes: { fajr: '05:30', sunrise: '06:45', dhuhr: '12:30', asr: '15:45', maghrib: '18:15', isha: '19:45' },
       hijriDate: lang === 'ar' ? '٢١ رجب ١٤٤٧ هـ' : '21 Rajab 1447 AH',
@@ -130,13 +138,13 @@ export const queryAdDeen = async (
   attachment?: Attachment
 ) => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
     const isMapsRequest = /(mosque|masjid|halal|restaurant|nearby|around me|location|where is|navigate|address of|places)/i.test(prompt);
     const isNewsRequest = /(news|latest|happening|update|recent posts|fatwa debate)/i.test(prompt);
     const isLegacyRequest = /(lesson|daily lesson|curriculum|legacy of knowledge)/i.test(prompt);
 
     let finalPrompt = prompt;
-    let tools: any[] = [];
+    const tools: any[] = [];
     let toolConfig: any = undefined;
     const activeModel = isMapsRequest ? 'gemini-2.5-flash' : MODEL_NAME;
 
@@ -156,7 +164,10 @@ export const queryAdDeen = async (
         );
         toolConfig = { retrievalConfig: { latLng: { latitude: pos.coords.latitude, longitude: pos.coords.longitude } } };
         finalPrompt += ` [Context: Lat ${pos.coords.latitude}, Lng ${pos.coords.longitude}]`;
-      } catch (e) {}
+      } catch {
+        // The user denied geolocation or the fix timed out. Maps grounding still
+        // works from the prompt text alone, just without a location bias.
+      }
     } else if (isNewsRequest) {
       tools.push({ googleSearch: {} });
     }
@@ -175,7 +186,7 @@ export const queryAdDeen = async (
       },
     });
 
-    let rawText = response.text || "Scholarly servers are currently silent.";
+    const rawText = response.text || "Scholarly servers are currently silent.";
     const isLegacyLesson = isLegacyRequest && rawText.includes('[[LEGACY_COMPLETE]]');
     let text = rawText.replace('[[LEGACY_COMPLETE]]', '').trim();
     
@@ -202,7 +213,7 @@ export const queryAdDeen = async (
 
 export const detectLocationName = async (lat: number, lng: number): Promise<string> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: [{ role: 'user', parts: [{ text: `Based on coordinates ${lat}, ${lng}, return ONLY the name of the City and Country. Format exactly as "City, Country". No extra text or periods.` }] }],
@@ -213,7 +224,7 @@ export const detectLocationName = async (lat: number, lng: number): Promise<stri
 
 export const generateLessonQuiz = async (lessonText: string, sect: Sect, madhab: Madhab): Promise<QuizQuestion[]> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: [{ role: 'user', parts: [{ text: `Based on this lesson: "${lessonText.substring(0, 3000)}", generate EXACTLY 5 challenging multiple choice questions for a ${sect} student of the ${madhab} madhab.` }] }],
@@ -239,9 +250,12 @@ export const generateLessonQuiz = async (lessonText: string, sect: Sect, madhab:
   });
 };
 
-export const getAIGradingFeedback = async (score: number, total: number, userAnswers: string[], correctAnswers: string[], sect: Sect, madhab: Madhab): Promise<string> => {
+// `_userAnswers` and `_correctAnswers` are accepted but not yet sent to the
+// model, so feedback is score-based only. Callers already pass them; wiring them
+// into the prompt is a feature change, not a stabilization one.
+export const getAIGradingFeedback = async (score: number, total: number, _userAnswers: string[], _correctAnswers: string[], sect: Sect, madhab: Madhab): Promise<string> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: [{ role: 'user', parts: [{ text: `The student scored ${score}/${total} on an Islamic quiz (${sect}/${madhab}). Provide scholarly feedback and encouragement.` }] }],
@@ -252,7 +266,7 @@ export const getAIGradingFeedback = async (score: number, total: number, userAns
 
 export const generateSacredArt = async (prompt: string): Promise<string> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: { parts: [{ text: prompt }] },
@@ -265,7 +279,7 @@ export const generateSacredArt = async (prompt: string): Promise<string> => {
 
 export const generateSacredVideo = async (prompt: string): Promise<string> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
     let operation = await ai.models.generateVideos({
       model: 'veo-3.1-fast-generate-preview',
       prompt: `${prompt}, cinematic Islamic aesthetic`,
@@ -277,7 +291,7 @@ export const generateSacredVideo = async (prompt: string): Promise<string> => {
     }
     const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
     if (!downloadLink) throw new Error("Video failed.");
-    const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+    const response = await fetch(`${downloadLink}&key=${env.geminiApiKey}`);
     const blob = await response.blob();
     return URL.createObjectURL(blob);
   });
@@ -293,7 +307,7 @@ export const generateDailyVersePrompt = async (): Promise<{ prompt: string, vers
 
 export const fetchQuranVerse = async (surah: number, ayah: number): Promise<QuranVerse> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: [{ role: 'user', parts: [{ text: `Retrieve Surah ${surah}, Ayah ${ayah}.` }] }],
@@ -321,7 +335,7 @@ export const fetchQuranVerse = async (surah: number, ayah: number): Promise<Qura
 
 export const fetchQuranRange = async (surah: number, startAyah: number, endAyah: number): Promise<QuranVerse[]> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: [{ role: 'user', parts: [{ text: `Retrieve Surah ${surah}, Ayah ${startAyah} to ${endAyah}.` }] }],
